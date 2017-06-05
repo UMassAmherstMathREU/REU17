@@ -7,6 +7,9 @@ PythonSage3Dptts
 ## How it Works
 ## Credits
 Gabriel Clara
+
 James Hagborg
+
 Augustus Ijams
+
 Edward McCormick
