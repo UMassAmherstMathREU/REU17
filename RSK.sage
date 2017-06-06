@@ -49,6 +49,50 @@ def row_insert(ssyt, k):
     """
     return row_insert_rownum(ssyt, k)[0]
 
+def ssyt_delete_entry(ssyt, row):
+    l = [list(r) for r in ssyt]
+    del l[row][-1]
+    if not l[row]:
+        del l[row]
+    return SemistandardTableau(l)
+
+def inverse_row_insert(ssyt, row):
+    """
+    Reverse the row insertion process.
+
+    Reverse a row insertion, starting with the last entry on
+    the given row.
+
+    Args:
+        ssyt: The SemistandardTableau to start with
+        row: The index (starting from 0) of the row which was
+            added to.
+
+    Returns:
+        A pair (newSSYT, k), with the resulting SSYT and the
+        element which was bumped out.
+
+    Raises:
+        ValueError: if removing from row would leave an
+            invalid tableau
+    """
+    shape = ssyt.shape()
+    if row < len(ssyt) - 1 and shape[row] == shape[row + 1]:
+        raise ValueError("removing from row would leave an "
+                         "invalid tableau")
+    # pull out last entry of row
+    k = ssyt[row][-1]
+    ssyt = ssyt_delete_entry(ssyt, row)
+    # convert to mutable so we can mess with it
+    ssytList = [list(r) for r in ssyt]
+    # move up the table and reverse the bumping
+    while row > 0:
+        row -= 1
+        col = max(i for i in range(ssyt.shape()[row])
+                  if ssyt[row][i] < k)
+        k, ssytList[row][col] = ssytList[row][col], k
+    return SemistandardTableau(ssytList), k
+
 ### Check row insertion matches with builtin method
 def test_row_insert():
     # edge case
@@ -58,7 +102,10 @@ def test_row_insert():
     for i in range(20):
         ssyt = SemistandardTableaux(10).random_element()
         for k in range(1, 11):
-            assert row_insert(ssyt, k) == ssyt.bump(k)
+            newssyt, row = row_insert_rownum(ssyt, k)
+            assert newssyt == ssyt.bump(k)
+            assert ssyt, k == reverse_row_insert(ssyt, row)
+            assert ssyt, k == ssyt.reverse_bump(row)
 test_row_insert()
 
 ### Define RSK algorithm
@@ -93,10 +140,40 @@ def rsk(mat):
             Q = Q.add_entry((row, col), i + 1)
     return P, Q
 
+def inverse_rsk(P, Q):
+    """
+    Apply the inverse RSK algorithm
+
+    Args:
+        P: The insertion tableau
+        Q: The recording tableau
+
+    Returns:
+        An list of tuples representing a two-line array
+
+    Raises:
+        ValueError: If P and Q are not the same shape
+    """
+    if P.shape() != Q.shape():
+        raise ValueError("P and Q are not the same shape")
+
+    omega = []
+    while P:
+        # find the largest, rightmost entry
+        i, _, r = max((Q[r][-1], len(Q[r]), r) for r in range(len(Q)))
+        Q = ssyt_delete_entry(Q, r)
+        P, j = inverse_row_insert(P, r)
+        omega.append((i, j))
+    # We built omega up backwards, flip it
+    omega.reverse()
+    return omega
+
 ### Test the RSK algorthim using the example in the text
 def test_rsk():
     A = matrix(ZZ, 3, 3, [1,0,2,0,2,0,1,1,0])
     P = SemistandardTableau([[1,1,2,2],[2,3],[3]])
     Q = SemistandardTableau([[1,1,1,3],[2,2],[3]])
+    omega = [(1,1),(1,3),(1,3),(2,2),(2,2),(3,1),(3,2)]
     assert rsk(A) == (P, Q)
+    assert inverse_rsk(P, Q) == omega
 test_rsk()
