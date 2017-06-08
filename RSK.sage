@@ -50,6 +50,16 @@ def row_insert(ssyt, k):
     return row_insert_rownum(ssyt, k)[0]
 
 def ssyt_delete_entry(ssyt, row):
+    """
+    Remove the last entry in a given row from the SSYT.
+
+    Args:
+        ssyt: The SemistandardTableau to remove from
+        row: The index of the row to remove from
+
+    Returns:
+        The resulting SSYT
+    """
     l = [list(r) for r in ssyt]
     del l[row][-1]
     if not l[row]:
