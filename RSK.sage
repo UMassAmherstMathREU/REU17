@@ -1,3 +1,5 @@
+from subprocess import call
+
 ### Implement row insertion
 def row_insert_rownum(ssyt, k):
     """
@@ -157,7 +159,7 @@ def rsk(mat, reverse=False):
         Q = Tableau([M - x for x in r] for r in Q)
     return P, Q
 
-def inverse_rsk(P, Q):
+def inverse_rsk(P, Q, reverse=False):
     """
     Apply the inverse RSK algorithm
 
@@ -174,6 +176,7 @@ def inverse_rsk(P, Q):
     if P.shape() != Q.shape():
         raise ValueError("P and Q are not the same shape")
 
+    if reverse
     omega = []
     while P:
         # find the largest, rightmost entry
@@ -244,28 +247,47 @@ def mat_to_table_row(mat):
                                              latex(Q),
                                              latex(pp.to_tableau()),
                                              latex(pp))
+def pp_to_table_row(pp):
+    P, Q = pp_to_ssyt(pp)
+    mat = reverse_rsk
 def write_document(filename, mats):
     header = """
 \\documentclass{article}
+\\usepackage[margin=0.5in]{geometry}
 \\usepackage{tikz}
 \\begin{document}
+\\begin{center}
 \\begin{tabular}{c | c | c | c | c}
 Matrix & $P$ & $Q$ & Partition (table) & Partition (diagram) \\\\
 \\hline
 """
-    footer = "\\end{tabular}\\end{document}"
+    footer = "\\end{tabular}\\end{center}\\end{document}"
     rows = " \\\\ \\hline ".join(mat_to_table_row(mat) for mat in mats)
-    f = open(filename, "w")
+    f = open(filename + ".tex", "w")
     f.write(header)
     f.write(rows)
     f.write(footer)
     f.close()
+    call(["pdflatex", filename + ".tex"])
+    call(["rm", filename + ".log",
+          filename + ".aux",
+          filename + ".tex"])
+    call(["xdg-open", filename + ".pdf"])
+
 
 mats = [[1,0,0,0],
         [0,1,0,0],
         [0,0,1,0],
         [0,0,0,1],
-        [1,1,0,0],
-        [2,0,0,0]]
+        [1,0,0,1],
+        [0,1,1,0],
+        [1,1,1,1]]
+"""
+mats = [[1,0,0,0,0,0,0,0,0],
+        [0,0,0,0,1,0,0,0,0],
+        [0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,1,0,0,0,1]]
+"""
 mats = [matrix(ZZ, 2, 2, mat) for mat in mats]
-write_document("out.tex", mats)
+write_document("test", mats)
+
