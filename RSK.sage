@@ -119,7 +119,7 @@ def test_row_insert():
 test_row_insert()
 
 ### Define RSK algorithm
-def rsk(mat):
+def rsk(mat, reverse=False):
     """Apply the RSK algorithm to a matrix.
 
     Given a matrix of non-negative integers, produce two SSYTs of the
@@ -140,14 +140,21 @@ def rsk(mat):
     # (i, j) appears.  Turning this into a list and sorting puts the
     # array in the order we want, where we first sort by i and then
     # sort by j
-    omega = sorted(list(mat.dict().items()))
+    omega = [((i + 1, j + 1), mat[i,j]) for i, j in mat.dict()]
+    if reverse and omega:
+        M = max(max(a, b) + 1 for (a, b), c in omega)
+        omega = [((M - a, M - b), c) for (a, b), c in omega]
+    omega.sort()
     for (i, j), a in omega:
         for _ in range(a):
             # Note that (i, j) start counting from 0 in python,
             # but most texts start counting from 1
-            P, row = row_insert_rownum(P, j + 1)
+            P, row = row_insert_rownum(P, j)
             col = Q.shape()[row] if row < len(Q.shape()) else 0
-            Q = Q.add_entry((row, col), i + 1)
+            Q = Q.add_entry((row, col), i)
+    if reverse:
+        P = Tableau([M - x for x in r] for r in P)
+        Q = Tableau([M - x for x in r] for r in Q)
     return P, Q
 
 def inverse_rsk(P, Q):
@@ -222,3 +229,8 @@ def pp_to_ssyt(part):
     P = Tableau(pcols).conjugate()
     Q = Tableau(qcols).conjugate()
     return P, Q
+
+### Go the whole way from mat -> pp
+def mat_to_pp(mat):
+    P, Q = rsk(mat, reverse=True)
+    return ssyt_to_pp(P, Q)    
