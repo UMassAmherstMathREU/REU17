@@ -233,4 +233,39 @@ def pp_to_ssyt(part):
 ### Go the whole way from mat -> pp
 def mat_to_pp(mat):
     P, Q = rsk(mat, reverse=True)
-    return ssyt_to_pp(P, Q)    
+    return ssyt_to_pp(P, Q)
+
+### Write output into a table
+
+def mat_to_table_row(mat):
+    P, Q = rsk(mat, reverse=True)
+    pp = ssyt_to_pp(P, Q)
+    return "${}$ & {} & {} & {} & {}".format(latex(mat), latex(P),
+                                             latex(Q),
+                                             latex(pp.to_tableau()),
+                                             latex(pp))
+def write_document(filename, mats):
+    header = """
+\\documentclass{article}
+\\usepackage{tikz}
+\\begin{document}
+\\begin{tabular}{c | c | c | c | c}
+Matrix & $P$ & $Q$ & Partition (table) & Partition (diagram) \\\\
+\\hline
+"""
+    footer = "\\end{tabular}\\end{document}"
+    rows = " \\\\ \\hline ".join(mat_to_table_row(mat) for mat in mats)
+    f = open(filename, "w")
+    f.write(header)
+    f.write(rows)
+    f.write(footer)
+    f.close()
+
+mats = [[1,0,0,0],
+        [0,1,0,0],
+        [0,0,1,0],
+        [0,0,0,1],
+        [1,1,0,0],
+        [2,0,0,0]]
+mats = [matrix(ZZ, 2, 2, mat) for mat in mats]
+write_document("out.tex", mats)
