@@ -343,4 +343,5 @@ parts = [PlanePartition(part) for part in
           [[1, 1]],
           [[1]]]]
 
-table = MatrixPartitionTable.from_mats(mats) + MatrixPartitionTable.from_parts(parts)
+#table = MatrixPartitionTable.from_mats(mats) + MatrixPartitionTable.from_parts(parts)
+table = MatrixPartitionTable.from_parts(pp for pp in PlanePartitions((2,2,2)) if pp.cells())
