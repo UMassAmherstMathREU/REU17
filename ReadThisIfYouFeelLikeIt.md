@@ -1,5 +1,5 @@
-# REU17
-PythonSage3Dptts
+# REU17 PythonSage3Dptts
+
 Presently, our developments are centered in the RSK.sage file which handles the following functions (among others):
 1. Converting from a matrix to a plane partition
 2. Converting from a plane partition to a matrix
