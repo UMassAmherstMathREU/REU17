@@ -166,9 +166,14 @@ def inverse_rsk(P, Q, nrow=None, ncol=None, reverse=False):
     Args:
         P: The insertion tableau
         Q: The recording tableau
+        nrow: The number of rows to make in the new matrix,
+            or None to determine automatically
+        ncol: The number of columns to make in the new matrix,
+            or None to determine automatically
+        reverse: Whether to use SSYT's or reverse SSYT's
 
     Returns:
-        An list of tuples representing a two-line array
+        A matrix with non-negative integer entries 
 
     Raises:
         ValueError: If P and Q are not the same shape
@@ -215,6 +220,16 @@ test_rsk()
 
 ### Define SSYT to plane partition algorithm
 def ssyt_to_pp(P, Q):
+    """
+    Convert two reverse SSYTs to a plane partition
+
+    Args:
+        P: The insertion tableau
+        Q: The recording tableau
+
+    Returns:
+        A plane partition resulting from merging P and Q
+    """
     newCols = [merge_cols(pcol, qcol) for pcol, qcol
                in zip(P.conjugate(), Q.conjugate())]
     pi = PlanePartition(newCols).transpose()
@@ -222,6 +237,15 @@ def ssyt_to_pp(P, Q):
     return PlanePartition(conjRows)
 
 def merge_cols(pcol, qcol):
+    """
+    Merge two columns by flipping and identifying diagonals.
+
+    Args:
+        pcol, qcol: Lists of integers representing partitions
+
+    Returns:
+        The result of the merge, as an integer list
+    """
     if len(pcol) != len(qcol):
         raise ValueError("The two columns have different sizes")
     diagLen = len(pcol)
@@ -300,6 +324,11 @@ class MatrixPartitionTable(object):
     def __repr__(self):
         return "Matrix/Partition Table " + repr(self.entries)
 
+    def __add__(self, other):
+        table = MatrixPartitionTable()
+        table.entries = self.entries + other.entries
+        return table
+
     
 mats = [matrix(ZZ, 2, 2, mat) for mat in [[1,0,0,0],
                                           [0,1,0,0],
@@ -314,4 +343,4 @@ parts = [PlanePartition(part) for part in
           [[1, 1]],
           [[1]]]]
 
-table = MatrixPartitionTable.from_parts(parts)
+table = MatrixPartitionTable.from_mats(mats) + MatrixPartitionTable.from_parts(parts)
