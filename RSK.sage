@@ -159,7 +159,7 @@ def rsk(mat, reverse=False):
         Q = Tableau([M - x for x in r] for r in Q)
     return P, Q
 
-def inverse_rsk(P, Q, reverse=False):
+def inverse_rsk(P, Q, nrow=None, ncol=None, reverse=False):
     """
     Apply the inverse RSK algorithm
 
@@ -176,26 +176,41 @@ def inverse_rsk(P, Q, reverse=False):
     if P.shape() != Q.shape():
         raise ValueError("P and Q are not the same shape")
 
-    if reverse
-    omega = []
+    if reverse:
+        M = max(x + 1 for x in P.entries() + Q.entries())
+        P = SemistandardTableau([[M - x for x in r] for r in P])
+        Q = SemistandardTableau([[M - x for x in r] for r in Q])
+
+    omega = {}
     while P:
         # find the largest, rightmost entry
         i, _, r = max((Q[r][-1], len(Q[r]), r) for r in range(len(Q)))
         Q = ssyt_delete_entry(Q, r)
         P, j = inverse_row_insert(P, r)
-        omega.append((i, j))
-    # We built omega up backwards, flip it
-    omega.reverse()
-    return omega
+        if (i, j) in omega:
+            omega[i, j] += 1
+        else:
+            omega[i, j] = 1
+
+    if reverse:
+        omega = {(M - i - 1, M - j - 1): k for (i, j), k in omega.items()}
+    else:
+        omega = {(i - 1, j - 1): k for (i, j), k in omega.items()}
+
+    if nrow is None:
+        nrow = max(i + 1 for i, j in omega)
+    if ncol is None:
+        ncol = max(j + 1 for i, j in omega)
+
+    return matrix(ZZ, nrow, ncol, omega)
 
 ### Test the RSK algorthim using the example in the text
 def test_rsk():
     A = matrix(ZZ, 3, 3, [1,0,2,0,2,0,1,1,0])
     P = SemistandardTableau([[1,1,2,2],[2,3],[3]])
     Q = SemistandardTableau([[1,1,1,3],[2,2],[3]])
-    omega = [(1,1),(1,3),(1,3),(2,2),(2,2),(3,1),(3,2)]
     assert rsk(A) == (P, Q)
-    assert inverse_rsk(P, Q) == omega
+    assert inverse_rsk(P, Q, 3, 3) == A
 test_rsk()
 
 ### Define SSYT to plane partition algorithm
@@ -238,56 +253,65 @@ def mat_to_pp(mat):
     P, Q = rsk(mat, reverse=True)
     return ssyt_to_pp(P, Q)
 
+def pp_to_mat(pp, nrow=None, ncol=None):
+    P, Q = pp_to_ssyt(pp)
+    return inverse_rsk(P, Q, nrow, ncol, reverse=True)
+
 ### Write output into a table
 
 def mat_to_table_row(mat):
     P, Q = rsk(mat, reverse=True)
     pp = ssyt_to_pp(P, Q)
-    return "${}$ & {} & {} & {} & {}".format(latex(mat), latex(P),
-                                             latex(Q),
-                                             latex(pp.to_tableau()),
-                                             latex(pp))
+    return mat, P, Q, pp
+
 def pp_to_table_row(pp):
     P, Q = pp_to_ssyt(pp)
-    mat = reverse_rsk
-def write_document(filename, mats):
-    header = """
-\\documentclass{article}
-\\usepackage[margin=0.5in]{geometry}
-\\usepackage{tikz}
-\\begin{document}
-\\begin{center}
-\\begin{tabular}{c | c | c | c | c}
-Matrix & $P$ & $Q$ & Partition (table) & Partition (diagram) \\\\
-\\hline
-"""
-    footer = "\\end{tabular}\\end{center}\\end{document}"
-    rows = " \\\\ \\hline ".join(mat_to_table_row(mat) for mat in mats)
-    f = open(filename + ".tex", "w")
-    f.write(header)
-    f.write(rows)
-    f.write(footer)
-    f.close()
-    call(["pdflatex", filename + ".tex"])
-    call(["rm", filename + ".log",
-          filename + ".aux",
-          filename + ".tex"])
-    call(["xdg-open", filename + ".pdf"])
+    mat = inverse_rsk(P, Q, reverse=True)
+    return mat, P, Q, pp
 
+class MatrixPartitionTable(object):
+    @staticmethod
+    def from_mats(mats):
+        table = MatrixPartitionTable()
+        table.entries = [mat_to_table_row(mat) for mat in mats]
+        return table
 
-mats = [[1,0,0,0],
-        [0,1,0,0],
-        [0,0,1,0],
-        [0,0,0,1],
-        [1,0,0,1],
-        [0,1,1,0],
-        [1,1,1,1]]
-"""
-mats = [[1,0,0,0,0,0,0,0,0],
-        [0,0,0,0,1,0,0,0,0],
-        [0,0,0,0,0,0,0,0,1],
-        [1,0,0,0,1,0,0,0,1]]
-"""
-mats = [matrix(ZZ, 2, 2, mat) for mat in mats]
-write_document("test", mats)
+    @staticmethod
+    def from_parts(parts):
+        table = MatrixPartitionTable()
+        table.entries = [pp_to_table_row(pp) for pp in parts]
+        return table
 
+    def _latex_(self):
+        header = """
+        \\begin{tabular}{c | c | c | c | c}
+        Matrix & $P$ & $Q$ & Partition (table) & Partition (diagram) \\\\
+        \\hline
+        """
+        footer = "\\end{tabular}"
+        rows = ["${}$ & {} & {} & {} & {}".format( latex(mat), latex(P),
+                                                   latex(Q),
+                                                   latex(pp.to_tableau()),
+                                                   latex(pp))
+                for mat, P, Q, pp in self.entries]
+        body = "\\\\ \\hline".join(rows)
+        return header + body + footer
+
+    def __repr__(self):
+        return "Matrix/Partition Table " + repr(self.entries)
+
+    
+mats = [matrix(ZZ, 2, 2, mat) for mat in [[1,0,0,0],
+                                          [0,1,0,0],
+                                          [0,0,1,0],
+                                          [0,0,0,1],
+                                          [1,0,0,1],
+                                          [0,1,1,0],
+                                          [1,1,1,1]]]
+
+parts = [PlanePartition(part) for part in
+         [[[2, 1], [1]],
+          [[1, 1]],
+          [[1]]]]
+
+table = MatrixPartitionTable.from_parts(parts)
