@@ -1,0 +1,72 @@
+Start with two SSYTs, (P,Q):
+ex:
+P = [[4,4,2,1]
+,    [3,1,1]
+,    [2]]
+Q = [[5,3,2,2]
+,    [4,2,1]
+,    [1]]
+
+1. Make a dot map for the first column of each SSYT:
+P: * * * *
+   * * *
+   * *
+
+Q: * * * * *
+   * * * *
+   *
+
+2. Indent each dot map by one indent per row:
+P: * * * *
+     * * *
+       * *
+
+Q: * * * * *
+     * * * *
+       *
+
+3. Conjugate the Q dot map around the diagonal:
+Q: *
+   * *
+   * * *
+   * *
+   * *
+
+4. Combine the two by merging their diagonals:
+P/Q: * * * *
+     * * * *
+     * * * *
+     * *
+     * *
+
+5. Take the resulting dot map and use the counts in each row to make the first column of the plane partition:
+PP: [4...]
+    [4...]
+    [4...]
+    [2...]
+    [2...]
+
+6. Repeat steps 1-5 for each remaining column until you have the completed plane partition.
+PP: [4,4,2,1]
+    [4,2,2,1]
+    [4,2]
+    [2]
+    [2]
+
+7. To get another plane partition, take each row of the result and conjugate it.
+PP[1]: * * * *
+       * * * *
+       * *
+       *
+PP'[1]:* * * *
+       * * *
+       * *
+       * *
+Therefore the first row of the new plane partition is: [4,3,2,2]
+
+8. Repeat step 7 for each remaining row of the result to yield the entire new plane partition:
+PP':[4,3,2,2]
+    [4,3,1,1]
+    [2,2,1,1]
+    [1,1]
+    [1,1]
