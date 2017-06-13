@@ -383,3 +383,52 @@ def pp_pairs(shape, size):
             for inner_size in range(size + 1)
             for pp1 in all_pps(inner_size, outer_shape = shape)
             for pp2 in all_pps(size - inner_size)]
+
+def pp_both_lists(shape, size):
+    return all_pps(size, inner_shape = shape), pp_pairs(shape, size)
+
+def pp_both_lengths(shape, size):
+    x, y = pp_both_lists(shape, size)
+    return len(x), len(y)
+
+def skew_pp_type(pp, max_entry):
+    count = Counter(x for row in pp for x in row if x is not None)
+    return tuple(count[i] for i in range(1, max_entry + 1))
+
+def examine_pp_problem(shape, size):
+    skews, pairs = pp_both_lists(shape, size)
+    if len(skews) != len(pairs):
+        print "Lengths do not match!"
+        return
+    skew_size_count = Counter(pp.size() for pp in skews)
+    inner_size_count = Counter(pp1.size() for pp1, pp2 in pairs)
+    outer_size_count = Counter(pp2.size() for pp1, pp2 in pairs)
+    pair_size_count = Counter(pp1.size() + pp2.size()
+                              for pp1, pp2 in pairs)
+    skew_type_count = Counter(skew_pp_type(pp, size) for pp in skews)
+    inner_type_count = Counter(skew_pp_type(pp1, size)
+                               for pp1, pp2 in pairs)
+    outer_type_count = Counter(skew_pp_type(pp2, size)
+                               for pp1, pp2 in pairs)
+    combined_type_count = Counter(skew_pp_type(pp1, size)
+                                  + skew_pp_type(pp2, size)
+                                  for pp1, pp2 in pairs)
+    summed_type_count = Counter(
+        tuple(x + y for x, y in zip(skew_pp_type(pp1, size),
+                                    skew_pp_type(pp2, size)))
+        for pp1, pp2 in pairs)
+
+    print "Skew sizes:", skew_size_count
+    print "Pair sizes:", pair_size_count
+    print "Skew types:", skew_type_count
+    print "Summed types:", summed_type_count
+    
+    # return true if this is somehow an excpetion
+    return (skew_size_count != pair_size_count or
+            skew_type_count != summed_type_count)
+
+non_matches = [(i, j, k)
+               for i in range(1,4)
+               for j in range(1,4)
+               for k in range(1,5)
+               if examine_pp_problem(Partition([i] * j), k)]
