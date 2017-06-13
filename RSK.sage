@@ -344,4 +344,42 @@ parts = [PlanePartition(part) for part in
           [[1]]]]
 
 #table = MatrixPartitionTable.from_mats(mats) + MatrixPartitionTable.from_parts(parts)
-table = MatrixPartitionTable.from_parts(pp for pp in PlanePartitions((2,2,2)) if pp.cells())
+table = MatrixPartitionTable.from_parts(
+    pp for pp in PlanePartitions((2,2,2)) if pp.cells())
+
+### List all skew PP's of given shape and size
+
+def is_skew_pp(pp):
+    rows_and_cols = list(pp) + list(pp.conjugate())
+    return all(a is None or a >= b
+               for row in rows_and_cols
+               for a, b in zip(row, row[1:]))
+
+def skew_pps_with_shape(skew_part, size):
+    for comp in Compositions(size, length = skew_part.size()):
+        i = 0
+        rows = []
+        for (outer, length) in zip(skew_part.outer(),
+                                   skew_part.row_lengths()):
+            rows.append([None] * (outer - length) + comp[i:i+length])
+            i += length
+        tab = SkewTableau(row for row in rows if row)
+        if is_skew_pp(tab):
+            yield tab
+
+def all_pps(size, inner_shape = None, outer_shape = None):
+    if inner_shape is None:
+        inner_shape = Partition([])
+    return [pp
+            for n in range(size + inner_shape.size() + 1)
+            for shape in Partitions(n)
+            if shape.contains(inner_shape)
+            if outer_shape is None or outer_shape.contains(shape)
+            for pp in skew_pps_with_shape(
+                    SkewPartition([shape, inner_shape]), size)]
+
+def pp_pairs(shape, size):
+    return [(pp1, pp2)
+            for inner_size in range(size + 1)
+            for pp1 in all_pps(inner_size, outer_shape = shape)
+            for pp2 in all_pps(size - inner_size)]
