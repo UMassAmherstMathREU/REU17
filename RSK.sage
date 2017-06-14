@@ -1,4 +1,4 @@
-from subprocess import call
+from collections import Counter
 
 ### Implement row insertion
 def row_insert_rownum(ssyt, k):
@@ -339,16 +339,19 @@ mats = [matrix(ZZ, 2, 2, mat) for mat in [[1,0,0,0],
                                           [1,1,1,1]]]
 
 parts = [PlanePartition(part) for part in
-         [[[2, 1], [1]],
-          [[1, 1]],
-          [[1]]]]
+         [[[1]],
+          [[1, 1], [1]],table
+          [[2, 1], [1]],
+          [[1, 1], [1, 1]],
+          [[1, 1], [1], [1]],
+          [[1, 1, 1], [1]]]]
 
 #table = MatrixPartitionTable.from_mats(mats) + MatrixPartitionTable.from_parts(parts)
 table = MatrixPartitionTable.from_parts(
-    pp for pp in PlanePartitions((2,2,2)) if pp.cells())
+    pp for pp in PlanePartitions((3,3,2))
+    if pp.cells() and len(pp.cells()) <= 6)
 
 ### List all skew PP's of given shape and size
-
 def is_skew_pp(pp):
     rows_and_cols = list(pp) + list(pp.conjugate())
     return all(a is None or a >= b
@@ -395,6 +398,18 @@ def skew_pp_type(pp, max_entry):
     count = Counter(x for row in pp for x in row if x is not None)
     return tuple(count[i] for i in range(1, max_entry + 1))
 
+def skew_pp_trace(pp):
+    startrow = [j for i, j in pp.cells() if i == 0]
+    startcol = [i for i, j in pp.cells() if j == 0]
+    trace = 0
+    if startrow:
+        s = min(startrow)
+        trace += sum(pp[i][j] for i, j in pp.cells() if i + s == j)
+    if startcol:
+        s = min(startcol)
+        trace += sum(pp[i][j] for i, j in pp.cells() if i == j + s)
+    return trace
+
 def examine_pp_problem(shape, size):
     skews, pairs = pp_both_lists(shape, size)
     if len(skews) != len(pairs):
@@ -412,23 +427,86 @@ def examine_pp_problem(shape, size):
                                for pp1, pp2 in pairs)
     combined_type_count = Counter(skew_pp_type(pp1, size)
                                   + skew_pp_type(pp2, size)
-                                  for pp1, pp2 in pairs)
+                                 for pp1, pp2 in pairs)
     summed_type_count = Counter(
         tuple(x + y for x, y in zip(skew_pp_type(pp1, size),
                                     skew_pp_type(pp2, size)))
         for pp1, pp2 in pairs)
-
-    print "Skew sizes:", skew_size_count
-    print "Pair sizes:", pair_size_count
-    print "Skew types:", skew_type_count
-    print "Summed types:", summed_type_count
+    split_count = Counter(
+        sum(x for row in pp1 for x in row)
+        for pp1, pp2 in pairs)
+    shape1_count = Counter(pp1.shape() for pp1, pp2 in pairs)
+    shape2_count = Counter(pp2.shape() for pp1, pp2 in pairs)
+    shape3_count = Counter((pp1.shape(), pp2.shape())
+                           for pp1, pp2 in pairs)
+    skew_shape_count = Counter(pp.shape() for pp in skews)
+    skew_trace_count = Counter(skew_pp_trace(pp) for pp in skews)
+    pair_trace_count = Counter(
+        sum(pp1[i][j] for i, j in pp1.cells() if i == j) +
+        sum(pp2[i][j] for i, j in pp2.cells() if i == j)
+        for pp1, pp2 in pairs)
     
+    print "----------------------------------"
+    print "Skew sizes:", sorted(skew_size_count.values())
+    print "Pair sizes:", sorted(pair_size_count.values())
+    print "Skew types:", dict(skew_type_count)
+    print "Summed types:", dict(summed_type_count)
+    print "Splits counts:", sorted(split_count.values())
+    print "Shape 1:", sorted(shape1_count.values())
+    print "Shape 2:", sorted(shape2_count.values())
+    print "Shape 3:", sorted(shape3_count.values())
+    print "Skew Shape:", sorted(skew_shape_count.values())
+    print "Skew Trace:", dict(skew_trace_count)
+    print "Pair Trace:", dict(pair_trace_count)
+    shapes_match = (sorted(shape3_count.values()) ==
+                    sorted(skew_shape_count.values()))
+    types_match = (skew_type_count == summed_type_count)
     # return true if this is somehow an excpetion
-    return (skew_size_count != pair_size_count or
-            skew_type_count != summed_type_count)
+    #return (skew_size_count != pair_size_count or
+    #        skew_type_count != summed_type_count)
+    return skew_trace_count != pair_trace_count
 
 non_matches = [(i, j, k)
                for i in range(1,4)
                for j in range(1,4)
-               for k in range(1,5)
+               for k in range(1,6)
                if examine_pp_problem(Partition([i] * j), k)]
+
+### Find all the bad hombres
+def bad_hombres(width, height, size):
+    skew, pairs = pp_both_lists(Partition([width] * height), size)
+    bad_pairs = [(p, q) for p, q in pairs
+                 if (len(q.outer_shape()) > height
+                     and q.outer_shape()[0] > width)]
+    bad_skews = [s for s in skew
+                 if any(i >= height and j >= width
+                        for i, j in s.cells())
+                 or (max(i + 1 for i, j in s.cells()) > height * 2 and
+                     max(j + 1 for i, j in s.cells()) > width * 2)]
+    return bad_skews, bad_pairs
+
+def print_skew_list(list_pair):
+    skews, pairs = list_pair
+    print "-" * 20
+    print "Bad Skew Partitions ({}):".format(len(skews))
+    for s in skews:
+        s.pp()
+        print
+    print "Bad Pairs of Parititons ({}):".format(len(pairs))
+    for p, q in pairs:
+        print "First:"
+        if p:
+            p.pp()
+        else:
+            print "  (null)"
+        print "Second:"
+        q.pp()
+        print
+
+def thicc_hombres(width, height, size):
+    skews, pairs = bad_hombres(width, height, size)
+    thicc_skews = [s for s in skews
+                   if all(i < height or j < width
+                          for i, j in s.cells())]
+    thicc_pairs = [(p, q) for p, q in pairs if p and p[0][0] == 1]
+    return thicc_skews, thicc_pairs
