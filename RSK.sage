@@ -568,7 +568,7 @@ def unknown_examples(width, height, size):
         A pair of lists, the first being the skew partitions
         and the second being pairs of partitions.
     """
-    skew, pairs = unknown_examples(Partition([width] * height), size)
+    skew, pairs = pp_both_lists(Partition([width] * height), size)
     bad_pairs = [(p, q) for p, q in pairs
                  if (len(q.outer_shape()) > height
                      and q.outer_shape()[0] > width)]
