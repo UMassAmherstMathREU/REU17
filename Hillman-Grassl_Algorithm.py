@@ -1,14 +1,14 @@
 def Hillman_Grassl(part):
     '''
-    Converts from a plane partition to a Hillman Grassl
-
-    Returns the Hillman Grassl
+    Converts from a plane partition of shape lambda to an positive integer valued
+    function over lambda. Information on plane partitions and their underlying
+    shapes can be found with explain(plane_partition) or on Wikipedia.
 
     Args:
-        part: a weak reverse plane partition
+        part: a weak reverse plane partition with shape lambda
 
     Returns:
-        A Hillman Grassl
+        a function from lambda to the positive integers
     '''
     #1. Creating the empty Tableau
     HG = Tableau([0]*x for x in part)
