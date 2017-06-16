@@ -1,0 +1,229 @@
+We are seeking to develop a bijection between plane partitions and Hillman-Grassl
+
+1. Start with a weak reverse plane partition (PT) and an empty plane partition of the same shape
+ex:
+PP: 0 1 3
+    2 4 4
+    3
+EP: 0 0 0
+    0 0 0
+    0
+
+2. Identify the South-West most non zero entry in the PP:
+PP: 0 1 3
+    2 4 4
+   |3|
+EP: 0 0 0
+    0 0 0
+    0
+
+3. Move from this entry according to the following algorithm:
+  -If the northern element is equal to the present element, then move north
+  -else move east
+  PP: 0 1 3
+      2 4 4
+     |3|
+  EP: 0 0 0
+      0 0 0
+      0
+(In this case we do not move since the northern element is less than the present element)
+
+4. Decrement all elements in the path of PP by 1:
+PP: 0 1 3
+    2 4 4
+   |2|
+EP: 0 0 0
+    0 0 0
+    0
+
+5. Identify the entry at the column of the first entry of the path, and the row of the last entry in the path of PP, then increment the same location in EP by 1.
+PP: 0 1 3
+    2 4 4
+   |2|
+EP: 0 0 0
+    0 0 0
+    1
+
+6. Repeat steps 2-5 until the PP is empty:
+
+(2).
+PP: 0 1 3
+    2 4 4
+   |2|
+EP: 0 0 0
+    0 0 0
+    1
+
+(3).
+PP: 0  1  3
+   |2||4||4|
+   |2|
+EP: 0  0  0
+    0  0  0
+    1
+
+(4).
+PP: 0  1  3
+   |1||3||3|
+   |1|
+EP: 0  0  0
+    0  0  0
+    1
+
+(5).
+PP: 0  1  3
+   |1||3||3|
+   |1|
+EP: 0  0  0
+    1  0  0
+    1
+
+(2).
+PP: 0 1 3
+    1 3 3
+   |1|
+EP: 0 0 0
+    1 0 0
+    1
+
+(3).
+PP: 0  1 |3|
+   |1||3||3|
+   |1|
+EP: 0  0  0
+    1  0  0
+    1
+
+(4).
+PP: 0  1 |2|
+   |0||2||2|
+   |0|
+EP: 0  0  0
+    1  0  0
+    1
+
+(5).
+PP: 0  1 |2|
+   |0||2||2|
+   |0|
+EP: 1  0  0
+    1  0  0
+    1
+
+(2).
+PP: 0  1  2
+    0 |2| 2
+    0
+EP: 1  0  0
+    1  0  0
+    1
+
+(3).
+PP: 0  1 |2|
+    0 |2||2|
+    0
+EP: 1  0  0
+    1  0  0
+    1
+
+(4).
+PP: 0  1 |1|
+    0 |1||1|
+    0
+EP: 1  0  0
+    1  0  0
+    1
+
+(5).
+PP: 0  1 |1|
+    0 |1||1|
+    0
+EP: 1  1  0
+    1  0  0
+    1
+
+(2).
+PP: 0  1  1
+    0 |1| 1
+    0
+EP: 1  1  0
+    1  0  0
+    1
+
+(3).
+PP: 0 |1||1|
+    0 |1| 1
+    0
+EP: 1  1  0
+    1  0  0
+    1
+
+(4).
+PP: 0 |0||0|
+    0 |0| 1
+    0
+EP: 1  1  0
+    1  0  0
+    1
+
+(5).
+PP: 0 |0||0|
+    0 |0| 1
+    0
+EP: 1  2  0
+    1  0  0
+    1
+
+(2).
+PP: 0  0 0
+    0  0|1|
+    0
+EP: 1  2  0
+    1  0  0
+    1
+
+(3).
+PP: 0  0 0
+    0  0|1|
+    0
+EP: 1  2  0
+    1  0  0
+    1
+
+(4).
+PP: 0  0 0
+    0  0|0|
+    0
+EP: 1  2  0
+    1  0  0
+    1
+
+(5).
+PP: 0  0 0
+    0  0|0|
+    0
+EP: 1  2  0
+    1  0  1
+    1
+
+Thus we end up with EP, which yields the same size as the size of PP.
+
+i. We take the hook length of each entry in EP:
+EP: 1  2  0
+    1  0  1
+    1
+HEP:5  3  1
+    4  2  1
+    1
+
+ii. We multiply the hook lengths by their respective entries:
+PEP:5  6  0
+    4  0  1
+    1
+PP: 0  1  3
+    2  4  4
+    3
+
+iii. The sum of the elements in PEP should be equal to the sum of the elements in PP:
+|PEP| = 17
+|PP|  = 17
