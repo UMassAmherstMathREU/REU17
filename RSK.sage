@@ -282,7 +282,6 @@ def pp_to_mat(pp, nrow=None, ncol=None):
     return inverse_rsk(P, Q, nrow, ncol, reverse=True)
 
 ### Write output into a table
-
 def mat_to_table_row(mat):
     P, Q = rsk(mat, reverse=True)
     pp = ssyt_to_pp(P, Q)
@@ -340,7 +339,7 @@ mats = [matrix(ZZ, 2, 2, mat) for mat in [[1,0,0,0],
 
 parts = [PlanePartition(part) for part in
          [[[1]],
-          [[1, 1], [1]],table
+          [[1, 1], [1]],
           [[2, 1], [1]],
           [[1, 1], [1, 1]],
           [[1, 1], [1], [1]],
@@ -353,12 +352,30 @@ table = MatrixPartitionTable.from_parts(
 
 ### List all skew PP's of given shape and size
 def is_skew_pp(pp):
+    """ 
+    Verify pp is a valid skew plane partition.
+    
+    Args:
+        pp: A SkewTableau representing a plane partition.
+    Returns:
+        True if pp is weakly decreasing down rows and columns.
+    """
     rows_and_cols = list(pp) + list(pp.conjugate())
     return all(a is None or a >= b
                for row in rows_and_cols
                for a, b in zip(row, row[1:]))
 
 def skew_pps_with_shape(skew_part, size):
+    """
+    Find all skew pps with exactly the given shape and size.
+
+    Args:
+        skew_part: A SkewPartition representing the shape of the
+            tableau.
+        size: The sum of all the entries.
+    Returns:
+        A list of all possible skew plane partitions.
+    """
     for comp in Compositions(size, length = skew_part.size()):
         i = 0
         rows = []
@@ -371,6 +388,21 @@ def skew_pps_with_shape(skew_part, size):
             yield tab
 
 def all_pps(size, inner_shape = None, outer_shape = None):
+    """
+    Find all skew pps satisfying the given conditions.
+
+    Args:
+        size: The sum of all entries in the partition
+        inner_shape: The shape at infinity.  If None, then
+            there is no shape at infinity (and this gives a
+            non-skew plane partition).
+        outer_shape: A bound that the partition must fit in.
+            It does not have to fit exactly.  If None, then
+            there is no boundary.
+    Returns:
+        A list of all plane partitions satisfying the
+        conditions.
+    """
     if inner_shape is None:
         inner_shape = Partition([])
     return [pp
@@ -382,6 +414,16 @@ def all_pps(size, inner_shape = None, outer_shape = None):
                     SkewPartition([shape, inner_shape]), size)]
 
 def pp_pairs(shape, size):
+    """
+    Find all plane partition pairs with the given shape and size.
+
+    A plane partition pair is a pair of non-skew plane partitions
+    where the first partition fits in shape, and the second has
+    no restrictions, and the sum of the sizes is constant.
+
+    Returns:
+        A list of all pairs of plane partitions.
+    """
     return [(pp1, pp2)
             for inner_size in range(size + 1)
             for pp1 in all_pps(inner_size, outer_shape = shape)
@@ -395,10 +437,29 @@ def pp_both_lengths(shape, size):
     return len(x), len(y)
 
 def skew_pp_type(pp, max_entry):
+    """
+    Find the type of a given skew pp.
+
+    The type is a tuple listing how many occurences of each number
+    there are in pp.
+
+    Args:
+        pp: The skew plane partition to work with.
+        max_entry: The length of the tuple to return.
+    Returns:
+        A tuple representing the type.
+    """
     count = Counter(x for row in pp for x in row if x is not None)
     return tuple(count[i] for i in range(1, max_entry + 1))
 
 def skew_pp_trace(pp):
+    """
+    Find the "trace" of a skew plane partition.
+
+    This is a made up operation we thought would be presesrved.
+    Turns out it's not.  It's essentially the sum of the two
+    diagonals when the shape at infinity is a box.
+    """
     startrow = [j for i, j in pp.cells() if i == 0]
     startcol = [i for i, j in pp.cells() if j == 0]
     trace = 0
@@ -411,10 +472,23 @@ def skew_pp_trace(pp):
     return trace
 
 def examine_pp_problem(shape, size):
+    """
+    Find any useful information about this particular case.
+
+    This method changes a lot based on what we think is
+    "interesting".
+
+    Args:
+        shape: A partition describing the shape at infinity.
+        size: The sum of all entries in the skew partition,
+            and in the partition pair.
+    Returns:
+        Whether or not this case is "interseting" in some way
+    """
     skews, pairs = pp_both_lists(shape, size)
     if len(skews) != len(pairs):
-        print "Lengths do not match!"
-        return
+        raise AssertionError("Lengths do not match!")
+    
     skew_size_count = Counter(pp.size() for pp in skews)
     inner_size_count = Counter(pp1.size() for pp1, pp2 in pairs)
     outer_size_count = Counter(pp2.size() for pp1, pp2 in pairs)
@@ -466,14 +540,34 @@ def examine_pp_problem(shape, size):
     #        skew_type_count != summed_type_count)
     return skew_trace_count != pair_trace_count
 
+"""
 non_matches = [(i, j, k)
                for i in range(1,4)
                for j in range(1,4)
                for k in range(1,6)
                if examine_pp_problem(Partition([i] * j), k)]
+"""
 
-### Find all the bad hombres
-def bad_hombres(width, height, size):
+### Find all the cases we don't know how to handle
+def unknown_examples(width, height, size):
+    """
+    Find all skew partitions and partition pairs which
+    we don't know how to handle.
+
+    Find all skew partitions which cannot be split up into
+    a pair of partitions with one fitting inside a box in the
+    most obvious way.  Also find all pairs of plane partitions
+    in which the second partition exceeds both the width and
+    height of the box.  These two lists should have the same
+    length.
+
+    Args:
+        width, height: Dimensions of the shape at infinity.
+        size: The sum of all entries in either case.
+    Returns:
+        A pair of lists, the first being the skew partitions
+        and the second being pairs of partitions.
+    """
     skew, pairs = pp_both_lists(Partition([width] * height), size)
     bad_pairs = [(p, q) for p, q in pairs
                  if (len(q.outer_shape()) > height
@@ -483,10 +577,20 @@ def bad_hombres(width, height, size):
                         for i, j in s.cells())
                  or (max(i + 1 for i, j in s.cells()) > height * 2 and
                      max(j + 1 for i, j in s.cells()) > width * 2)]
+    assert len(bad_pairs) == len(bad_skews), \
+        "There are {} leftover skews, but {} leftover pairs!".format(
+            len(bad_skews), len(bad_pairs))
     return bad_skews, bad_pairs
 
-def print_skew_list(list_pair):
-    skews, pairs = list_pair
+def print_unknown_examples(width, height, size):
+    """
+    Print out the unknown examples in a nice way.
+
+    Args:
+        width, height: The shape at infinity.
+        size: The sum of all entries.
+    """
+    skews, pairs = unknown_examples(width, height, size)
     print "-" * 20
     print "Bad Skew Partitions ({}):".format(len(skews))
     for s in skews:
@@ -502,11 +606,3 @@ def print_skew_list(list_pair):
         print "Second:"
         q.pp()
         print
-
-def thicc_hombres(width, height, size):
-    skews, pairs = bad_hombres(width, height, size)
-    thicc_skews = [s for s in skews
-                   if all(i < height or j < width
-                          for i, j in s.cells())]
-    thicc_pairs = [(p, q) for p, q in pairs if p and p[0][0] == 1]
-    return thicc_skews, thicc_pairs
