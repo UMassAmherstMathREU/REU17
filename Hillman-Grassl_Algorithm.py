@@ -4,41 +4,73 @@ def Hillman_Grassl(part):
 
     Returns the Hillman Grassl Tableau
 
+    Note: See Hillman-Grassl_Correspondence.txt for more information on the Algorithm
+
     Args:
         part: a weak reverse plane partition
 
     Returns:
         A Hillman Grassl Tableau
     '''
-    #1. Creating the empty Tableau
-    HG = Tableau([0]*x for x in part)
-    #Setup variables
-    ppart = part
-    row, col = ppart.shape
+    ##1. Creating the empty Tableau and setup variables
+
+    #A copy of part stored as a list of lists
+    ppart = [list(r) for r in part]
+
+    #A copy of part with all zero entries stored as a list of lists
+    HG = [[0]* len(ppart) for r in ppart]
+
+    #Holder variables for later
+    row = len(ppart)
+    col = 0
     prow = row
     pcol = 0
     pcolstore = 0
-    #6. Loop steps 2-5
+
+    ##5. Loop steps 2-4
+
+    #Continues to run while part still has non-zero entires
     any(x != 0 for x in ppart.entries):
-        #2. Finding the southwest entry
-        for x in col:
-            if ppart[prow][x] != 0:
-                pcol = x
-                pcolstore = x
-                break
-            if x == col and ppart[prow][x] == 0:
-                prow-=1
-        #3.Develop the path
+
+        ##2. Finding the southwest entry
+
+        max(i for i in range(rows)
+            if ppart[i][0])
+
+        #stores the lowest row with a non-zero entry
+        negi, j = min((-i, j) for i in range(rows)
+                      for j in range(len(x[i]))
+                      if x[i][j] != 0)
+
+        #fixes the negative and gives friendlier names
+        #prow: present row, pcol: present column, pcolstore: storing the present column for step 4
+        prow, pcol = -negi, j
+        pcolstore = pcol
+
+        ##3.Develop the path
+
+        #gets the length of the present row
+        col = len(ppart[prow])
+
+        #Loops until our present entry is on the right side of the partition
         while pcol <= col:
+            #checks to see if the northern element is the same as the present one
+            #if so it moves up and decrements the old element
+            #also resets the length of the new row
             if ppart[prow][pcol] == ppart[prow-1][pcol]:
                 ppart[prow][pcol] -= 1
                 prow-=1
+                col = len(ppart[prow])
+
+            #if the northern element was not the same it moves east
+            #and still decrements the old element
             else:
                 ppart[prow][pcol] -= 1
                 pcol+=1
-        #5 Increment HG
+
+        ##4 Increment HG
         HG[prow][pcolstore] += 1
-    #Fix this later
+    #Convert HG to a Tableau
     return HG
 
 def Inverse_HG(HG):
