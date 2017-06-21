@@ -1,5 +1,9 @@
 We are seeking to develop a bijection between plane partitions and Hillman-Grassl
 
+Forward Hillman-Grassl_Correspondence:
+
+Reversed will begin around line 250.
+
 1. Start with a weak reverse plane partition (Plane Partition 'PP') and an empty plane partition (Empty Partition 'EP') of the same shape
 ex:
 PP: 0 1 3
@@ -243,3 +247,234 @@ PP: 0  1  3
 iii. The sum of the elements in PEP should be equal to the sum of the elements in PP:
 |PEP| = 17
 |PP|  = 17
+
+Reversed Hillman-Grassl_Correspondence
+
+1. Start with a Hillman-Grassl Tableau (Hillman Grassl 'HG'), and an empty partition that will become our weak reversed plane partition (Plane Partition 'PP'):
+same ex:
+HG: 1  2  0
+    1  0  1
+    1
+PP: 0  0  0
+    0  0  0
+    0
+
+2. Choose the north-most non-zero entry in the east-most non-zero column (1):
+HG: 1  2  0
+    1  0 |1|
+    1
+PP: 0  0  0
+    0  0  0
+    0
+
+3. Draw a line through the row and column of this element:
+HG: 1  2 (0)
+   (1)(0)|1|
+    1
+PP: 0  0  0
+    0  0  0
+    0
+
+4. In PP, start from the easternmost element in this row.  Move from this entry according to the following algorithm:
+  -If the southern element is equal to the present element, then move south
+  -else move west
+  Only move as far west as the column
+  Path here is: (0)
+HG: 1  2 (0)
+   (1)(0)|1|
+    1
+PP: 0  0  0
+    0  0 |0|
+    0
+
+5. Increment each element of the path in PP and decrement the element of HG:
+HG: 1  2  0
+    1  0 |0|
+    1
+PP: 0  0  0
+    0  0 |1|
+    0
+
+6. Repeat steps 2-5 until the HG is empty:
+
+(2). Choose the north-most non-zero entry in the east-most non-zero column (2):
+HG: 1 |2| 0
+    1  0  0
+    1
+PP: 0  0  0
+    0  0  1
+    0
+
+(3). Draw a line through the row and column of this element:
+HG:(1)|2|(0)
+    1 (0) 0
+    1
+PP: 0  0  0
+    0  0  1
+    0
+
+(4). In PP, start from the easternmost element in this row.  Move from this entry according to the following algorithm:
+  -If the southern element is equal to the present element, then move south
+  -else move west
+  Only move as far west as the column
+  Path here is: (0,0,0)
+HG:(1)|2|(0)
+    1 (0) 0
+    1
+PP: 0 |0||0|
+    0 |0| 1
+    0
+
+(5). Increment each element of the path in PP and decrement the element of HG:
+HG: 1 |1| 0
+    1  0  0
+    1
+PP: 0 |1||1|
+    0 |1| 1
+    0
+
+(2). Choose the north-most non-zero entry in the east-most non-zero column (1):
+HG: 1 |1| 0
+    1  0  0
+    1
+PP: 0  1  1
+    0  1  1
+    0
+
+(3). Draw a line through the row and column of this element:
+HG:(1)|1|(0)
+    1 (0) 0
+    1
+PP: 0  1  1
+    0  1  1
+    0
+
+(4). In PP, start from the easternmost element in this row.  Move from this entry according to the following algorithm:
+  -If the southern element is equal to the present element, then move south
+  -else move west
+  Only move as far west as the column
+  Path here is: (1,1,1)
+HG:(1)|1|(0)
+    1 (0) 0
+    1
+PP: 0  1 |1|
+    0 |1||1|
+    0
+
+(5). Increment each element of the path in PP and decrement the element of HG:
+HG: 1 |0| 0
+    1  0  0
+    1
+PP: 0  1 |2|
+    0 |2||2|
+    0
+
+(2). Choose the north-most non-zero entry in the east-most non-zero column (1):
+HG:|1| 0  0
+    1  0  0
+    1
+PP: 0  1  2
+    0  2  2
+    0
+
+(3). Draw a line through the row and column of this element:
+HG:|1|(0)(0)
+   (1) 0  0
+   (1)
+PP: 0  1  2
+    0  2  2
+    0
+
+(4). In PP, start from the easternmost element in this row.  Move from this entry according to the following algorithm:
+  -If the southern element is equal to the present element, then move south
+  -else move west
+  Only move as far west as the column
+  Path here is: (2,2,2,0,0)
+HG:|1|(0)(0)
+   (1) 0  0
+   (1)
+PP: 0  1 |2|
+   |0||2||2|
+   |0|
+
+(5). Increment each element of the path in PP and decrement the element of HG:
+HG:|0| 0  0
+    1  0  0
+    1
+PP: 0  1 |3|
+   |1||3||3|
+   |1|
+
+(2). Choose the north-most non-zero entry in the east-most non-zero column (1):
+HG: 0  0  0
+   |1| 0  0
+    1
+PP: 0  1  3
+    1  3  3
+    1
+
+(3). Draw a line through the row and column of this element:
+HG:(0) 0  0
+   |1|(0)(0)
+   (1)
+PP: 0  1  3
+    1  3  3
+    1
+
+(4). In PP, start from the easternmost element in this row.  Move from this entry according to the following algorithm:
+ -If the southern element is equal to the present element, then move south
+ -else move west
+ Only move as far west as the column
+ Path here is: (3,3,1,1)
+HG:(0) 0  0
+   |1|(0)(0)
+   (1)
+PP: 0  1  3
+   |1||3||3|
+   |1|
+
+(5). Increment each element of the path in PP and decrement the element of HG:
+HG: 0  0  0
+   |0| 0  0
+    1
+PP: 0  1  3
+   |2||4||4|
+   |2|
+
+(2). Choose the north-most non-zero entry in the east-most non-zero column (1):
+HG: 0  0  0
+    0  0  0
+   |1|
+PP: 0  1  3
+    2  4  4
+    2
+
+(3). Draw a line through the row and column of this element:
+HG:(0) 0  0
+   (0) 0  0
+   |1|
+PP: 0  1  3
+    2  4  4
+    2
+
+(4). In PP, start from the easternmost element in this row.  Move from this entry according to the following algorithm:
+-If the southern element is equal to the present element, then move south
+-else move west
+Only move as far west as the column
+Path here is: (2)
+HG:(0) 0  0
+   (0) 0  0
+   |1|
+PP: 0  1  3
+    2  4  4
+   |2|
+
+(5). Increment each element of the path in PP and decrement the element of HG:
+HG: 0  0  0
+    0  0  0
+   |0|
+PP: 0  1  3
+    2  4  4
+   |3|
+
+And thus we are left with the same plane partition that we started with.

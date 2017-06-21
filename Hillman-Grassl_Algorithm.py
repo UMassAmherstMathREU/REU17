@@ -37,8 +37,8 @@ def Hillman_Grassl(part):
         max(i for i in range(rows)
             if ppart[i][0])
 
-        #stores the lowest row with a non-zero entry
-        negi, j = min((-i, j) for i in range(rows)
+        #stores the lowest row with a non-zero entry and the entry
+        negi, j = min((-i, j) for i in range(row)
                       for j in range(len(x[i]))
                       if x[i][j] != 0)
 
@@ -71,7 +71,9 @@ def Hillman_Grassl(part):
         ##4 Increment HG
         HG[prow][pcolstore] += 1
     #Convert HG to a Tableau
-    return HG
+    HGT = Tableau(HG)
+
+    return HGT
 
 def Inverse_HG(HG):
     '''
@@ -85,31 +87,63 @@ def Inverse_HG(HG):
     Returns:
         a plane partition
     '''
-    #1. Creating the empty partition
-    part = partition([0]*x for x in part)
-    #setup variables
-    row, col = HG.shape
+    ##1. Creating the empty Tableau and setup variables
+
+    #A copy of HG stored as a list of lists
+    HGL = [list(r) for r in part]
+
+    #A copy of HG with all zero entries stored as a list of lists
+    ppart = [[0]* len(HGL) for r in HGL]
+
+    #Holder variables for later
+    row = len(HGL)
+    col = 0
     prow = 0
     pcol = 0
-    #6. Loop steps 2-5
-    any(x != 0 for x in ppart.entries):
-        #2. Finding the northeast entry
-        for x in row:
-            for y in col:
-                if HG[row][col] != 0:
-                    prow = row
-                    pcol = col
-                    break
-            if HG[row][col] != 0:
-                break
-        #3.Develop the path
-        while pcol > 0:
-            if HG[prow][pcol] == HG[prow+1][pcol]:
-                HG[prow][pcol] -= 1
+    pcolstore = 0
+
+    ##5. Loop steps 2-4
+
+    #Continues to run while HGL still has non-zero entires
+    any(x != 0 for x in HGL.entries):
+
+        ##2. Finding the northeast entry
+
+        max(i for i in range(row)
+            if HGL[i][0])
+
+        #stores the higest row with a non-zero entry and the entry
+        #prow: present row, pcol: present column, pcolstore: storing the present column for step 4
+        prow, pcol = min((i, j) for i in range(row)
+                      for j in range(len(x[i]))
+                      if x[i][j] != 0)
+        pcolstore = pcol
+
+        ##3.Develop the path
+
+        #assigns col to the bounding column and pcol to the eastern edge of the HGL
+        col = pcol
+        pcol = len(HGL[prow])
+
+        #Loops until our present entry reaches the bounding column
+        while pcol >= col:
+            #checks to see if the southern element is the same as the present one
+            #if so it moves down and increments the old element
+            #also resets the length of the new row
+            if ppart[prow][pcol] == ppart[prow+1][pcol]:
+                ppart[prow][pcol] += 1
                 prow+=1
+                col = len(HGL[prow])
+
+            #if the southern element was not the same it moves west
+            #and still increments the old element
             else:
-                HG[prow][pcol] -= 1
-                pcol-=1
-        #5 Increment part
-        part[prow][pcol] += 1
+                ppart[prow][pcol] -= 1
+                pcol+=1
+
+        ##4 Decrement HGL
+        HGL[prow][pcolstore] -= 1
+    #Convert ppart to a Tableau
+    part = Tableau(ppart)
+
     return part
