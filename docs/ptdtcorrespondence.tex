@@ -1,4 +1,83 @@
-\documentclass{article}
+\documentclass{amsart}
+\usepackage{amsthm}
+\newcommand{\pt}[1]{\mathbb{P}_\mathrm{PT}^{#1}}
+\newcommand{\dt}[1]{\mathbb{P}_\mathrm{DT}^{#1}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\HG}[1]{\mathrm{HG}_{#1}}
+\newcommand{\hg}[1]{\mathrm{hg}_{#1}}
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
 \begin{document}
-Foo!
+First, some basic notation:
+
+\begin{definition}
+  A \emph{weak reverse plane partition} with shape $\lambda$ is a
+  tableau of shape $\lambda$ containing natural numbers (including 0),
+  such that the rows and columns are weakly increasing.
+  
+  Let $\pt{\lambda}$ be the set of all weak reverse plane partitions
+  with shape $\lambda$.
+\end{definition}
+\begin{definition}
+  A plane partition with \emph{shape at infinity} $\lambda$, or
+  \emph{skew plane partition}, is a tableau containing entries from
+  $\ZZ_+ \cup \{\infty\}$, such that rows and columns are weakly
+  decreasing, and a cell contains $\infty$ iff it is contained in
+  $\lambda$.
+  
+  Let $\dt{\lambda}$ be the set of all plane partitions with the shape
+  at infinity $\lambda$.  In particular, $\dt{\emptyset}$ is the set of
+  all plane partitions without any shape at infinity.
+\end{definition}
+\begin{definition}
+  If $\pi \in \pt{\lambda}$, define the \emph{size} of $\pi$, written
+  $|\pi|$, to be the sum of all entries in $\pi$.  Similarly, if
+  $|\pi| \in \dt{\lambda}$, define $|\pi|$ to be the sum of all
+  non-infinity entries in $\pi$.
+\end{definition}
+
+Given $\lambda$, we wish to find a bijection
+$\Psi : \pt{\lambda} \times \dt{\emptyset} \to \dt{\lambda}$, such
+that $|\Psi(\mu, \pi) = |\pi| + |\mu|$.  In order to do this, we make
+use of the Hillman-Grassl Correspondence, which associates to all
+$\pi \in \pt{\lambda}$ a function $f : \lambda \to \NN$ (where
+$\lambda$ is identified with its diagram, as a subset of $\ZZ_+^2$).
+The size of $\pi$ is encoded as a weighted sum over values of $f$.  We
+also adapt this correspondence to work on $\dt{\lambda}$, giving a
+function with domain $\lambda^* = \ZZ_+^2 \setminus \lambda$.  In
+particular, for $\dt{\emptyset}$, the domain is just $\ZZ_+^2$.  Thus
+if we can find a bijection between $\lambda^*$ and the disjoint union
+$\lambda \sqcup \ZZ_+^2$ which respects the weights of each cell, this
+will yield a bijection between Hillman-Grassl functions, which in turn
+gives the bijection $\Psi$ we are looking for.
+
+To make this more precise, we have the following definitions:
+\begin{definition}
+  A \emph{Hillman-Grassl tableau} or \emph{HG-tableau} of shape
+  $\lambda$ is a tableau with entries from $\NN$, or equivalently a
+  function $f : \lambda \to \NN$.
+
+  Let $\HG{\lambda}$ denote the set of all HG-tableaux, and let
+  $\hg{\lambda} : \pt{\lambda} \to \HG{\lambda}$ denote the
+  Hillman-Grassl algorithm.
+\end{definition}
+\begin{definition}
+  Given a partition $\lambda$ and a cell $u \in \lambda$, the
+  \emph{hook length} $h_\lambda(u)$ is the number of cells in lambda
+  directly below or to the right of $u$, including $u$.  That is,
+  \[
+    h_\lambda(u) = \lambda_i - j + \lambda_j' - i + 1
+  \]
+\end{definition}
+\begin{definition}
+  The \emph{size} of an HG-tableau $f \in \HG{\lambda}$ is the
+  weighted sum over hook lengths
+  \[
+    |f| = \sum_{u \in \lambda} h_\lambda(u) f(u)
+  \]
+\end{definition}
+\begin{theorem}
+  The 
+\end{theorem}
 \end{document}
