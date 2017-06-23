@@ -1,0 +1,454 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{multicol}
+\usepackage[english]{babel}
+\usepackage{amsthm}
+\newcommand{\pt}[1]{\mathbb{P}_\mathrm{PT}^{#1}}
+\newcommand{\dt}[1]{\mathbb{P}_\mathrm{DT}^{#1}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\HG}[1]{\mathrm{HG}_{#1}}
+\newcommand{\hg}[1]{\mathrm{hg}_{#1}}
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\author{Edward McCormick}
+
+\title{Hillman Grassl Algorithm}
+
+\begin{document}
+	
+	The Hillman-Grassl Algorithm is a method that converts a weak reverse plane partition$(\pi)$ to a tableau of Hillman-Grassl data$(f)$.  Additionally, one may invert these steps to yield the inverse Hillman-Grassl Algorithm.  First, we will demonstrate the "normal" Hillman-Grassl Algorithm.
+	
+	\begin{enumerate}
+		\item Select the bottom left entry in $\pi$.
+		\[
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{0}&\lr{1}&\lr{3}\\\cline{1-3}
+				\lr{1}&\lr{3}&\lr{3}\\\cline{1-3}
+				\lr{\mathbf{1}}\\\cline{1-1}
+				\end{array}$}
+		}
+		\]
+		\item Move through $\pi$ marking entries according to the following rules:
+		\begin{enumerate}
+			\item Move upwards if the above entry is equal to the present entry.
+			\item Otherwise move to the right.
+		\end{enumerate}
+			\[
+			{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+				\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+					\lr{0}&\lr{1}&\lr{\mathbf{3}}\\\cline{1-3}
+					\lr{\mathbf{1}}&\lr{\mathbf{3}}&\lr{\mathbf{3}}\\\cline{1-3}
+					\lr{\mathbf{1}}\\\cline{1-1}
+					\end{array}$}
+			}
+			\]	
+		\item Decrement each marked entry by 1.
+		\[
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{0}&\lr{1}&\lr{\mathbf{2}}\\\cline{1-3}
+				\lr{\mathbf{0}}&\lr{\mathbf{2}}&\lr{\mathbf{2}}\\\cline{1-3}
+				\lr{\mathbf{0}}\\\cline{1-1}
+				\end{array}$}
+		}
+		\]	
+		\item Draw a line through the column of the starting entry and the row of the ending entry.  These two lines create an intersection at one entry in the plane partition.  Increment the corresponding entry in $f$ by 1.
+		\begin{center}
+		\begin{tabular}{cc}
+		$\pi$ & $f$ \\
+		$
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{0}&\lr{1}&\lr{\mathbf{2}}\\\cline{1-3}
+				\lr{\mathbf{0}}&\lr{\mathbf{2}}&\lr{\mathbf{2}}\\\cline{1-3}
+				\lr{\mathbf{0}}\\\cline{1-1}
+				\end{array}$}
+		}$
+		& $
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{\mathbf{1}}&\lr{0}&\lr{0}\\\cline{1-3}
+				\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+				\lr{0}\\\cline{1-1}
+				\end{array}$}
+		}
+		$
+		\end{tabular}
+		\end{center}
+		\item Repeat the above procedure until the plane partition is empty, and the result will be a set of Hillman-Grassl data.
+	\end{enumerate}
+	
+	\newpage
+	
+	With some slight modifications, one can use a similar methodology to go from a set of Hillman-Grassl data to a weak reverse plane partition.
+	
+	\begin{enumerate}
+		\item Select the top right entry in the Hillman-Grassl data (mark the row and column that this entry is in).
+		\begin{center}
+			\begin{tabular}{cc}
+				$f$ & $\pi$ \\
+				$
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{1}&\lr{\mathbf{1}}&\lr{0}\\\cline{1-3}
+				\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+				\lr{1}\\\cline{1-1}
+				\end{array}$}
+		}
+			$&$
+			{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+				\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+					\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+					\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+					\lr{0}\\\cline{1-1}
+					\end{array}$}
+			}
+		$
+		\end{tabular}
+		\end{center}
+		\item Looking at the plane partition: Starting from the right most entry in the marked row.  Move through the plane partition marking entries according to the following rules:
+		\begin{enumerate}
+			\item Move downwards if the below entry is equal to the present entry.
+			\item Otherwise move to the left.
+		
+		\vspace{2mm}
+		
+		Unlike the previous algorithm, you do not necessarily end when you reach the left most column, but instead when you reach the marked column.
+		\end{enumerate}
+		\begin{center}
+			\begin{tabular}{cc}
+				$f$ & $\pi$ \\
+				$
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{1}&\lr{\mathbf{1}}&\lr{0}\\\cline{1-3}
+				\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+				\lr{1}\\\cline{1-1}
+				\end{array}$}
+		}
+		$&$
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{0}&\lr{0}&\lr{\mathbf{0}}\\\cline{1-3}
+				\lr{0}&\lr{\mathbf{0}}&\lr{\mathbf{0}}\\\cline{1-3}
+				\lr{0}\\\cline{1-1}
+				\end{array}$}
+		}
+		$
+				\end{tabular}
+				\end{center}
+		\item Increment each marked entry in the plane partition by 1, and decrement the marked entry in the Hillman-Grassl data.
+		\begin{center}
+			\begin{tabular}{cc}
+				$f$ & $\pi$ \\
+				$
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{1}&\lr{\mathbf{0}}&\lr{0}\\\cline{1-3}
+				\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+				\lr{1}\\\cline{1-1}
+				\end{array}$}
+		}
+		$&$
+		{\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+			\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+				\lr{0}&\lr{0}&\lr{\mathbf{1}}\\\cline{1-3}
+				\lr{0}&\lr{\mathbf{1}}&\lr{\mathbf{1}}\\\cline{1-3}
+				\lr{0}\\\cline{1-1}
+				\end{array}$}
+		}
+		$
+				\end{tabular}
+				\end{center}
+		\item Repeat the above procedure until the Hillman-Grassl data is empty, and the result will be a weak reverse plane partition.
+	\end{enumerate}
+	
+\newpage
+	
+\begin{figure}[h]
+\caption{An example of the full algorithm, forwards(left), and inverse(right).}
+\begin{multicols}{2}
+
+$$hg_\lambda: \mathbb{P}_{PT}^\lambda \rightarrow \mbox{HG}_\lambda$$
+
+%\noindent\rule{12cm}{0.4pt}
+%\setlength{\columnseprule}{0.2pt}
+	
+%Normal Hillman Grassl
+
+\begin{center}
+ 	{\renewcommand{\arraystretch}{2} 
+\begin{tabular}{cc}
+$\pi$ & $f$ \\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+	\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+		\lr{0}&\lr{1}&\lr{3}\\\cline{1-3}
+		\lr{2}&\lr{4}&\lr{4}\\\cline{1-3}
+		\lr{3}\\\cline{1-1}
+		\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{3}\\\cline{1-3}
+	\lr{2}&\lr{4}&\lr{4}\\\cline{1-3}
+	\lr{2}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{3}\\\cline{1-3}
+	\lr{1}&\lr{3}&\lr{3}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{2}\\\cline{1-3}
+	\lr{0}&\lr{2}&\lr{2}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{1}\\\cline{1-3}
+	\lr{0}&\lr{1}&\lr{1}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{1}&\lr{1}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}&\lr{0}&\lr{1}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{1}&\lr{2}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{1}&\lr{2}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{1}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\end{tabular}
+}
+\end{center}
+
+%Reverse Hillman Grassl
+
+$$hg_\lambda^{-1}: \mbox{HG}_\lambda \rightarrow \mathbb{P}_{PT}^\lambda  $$
+
+\begin{center}
+	{\renewcommand{\arraystretch}{2} 
+	\begin{tabular}{cc}
+		$f$ & $\pi$ \\
+		$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+	\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+		\lr{1}&\lr{2}&\lr{0}\\\cline{1-3}
+		\lr{1}&\lr{0}&\lr{1}\\\cline{1-3}
+		\lr{1}\\\cline{1-1}
+		\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{1}&\lr{2}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}&\lr{0}&\lr{1}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{1}&\lr{1}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{1}\\\cline{1-3}
+	\lr{0}&\lr{1}&\lr{1}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{2}\\\cline{1-3}
+	\lr{0}&\lr{2}&\lr{2}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{3}\\\cline{1-3}
+	\lr{1}&\lr{3}&\lr{3}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{1}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{3}\\\cline{1-3}
+	\lr{2}&\lr{4}&\lr{4}\\\cline{1-3}
+	\lr{2}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\\
+$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}&\lr{0}&\lr{0}\\\cline{1-3}
+	\lr{0}\\\cline{1-1}
+	\end{array}$}
+}
+$&$
+{\renewcommand{\arraystretch}{1}\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+\raisebox{-.6ex}{$\begin{array}[b]{*{3}c}\cline{1-3}
+	\lr{0}&\lr{1}&\lr{3}\\\cline{1-3}
+	\lr{2}&\lr{4}&\lr{4}\\\cline{1-3}
+	\lr{3}\\\cline{1-1}
+	\end{array}$}
+}
+$
+\end{tabular}
+}
+\end{center}
+
+\end{multicols}
+\end{figure}
+\end{document}

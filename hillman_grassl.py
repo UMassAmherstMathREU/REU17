@@ -32,6 +32,11 @@ def Hillman_Grassl(part):
 
     ##5. Loop steps 2-4
 
+    # print to latex
+    f = open('/home/nmiv/findme', 'w')
+    f.write(latex(Tableau(ppart)))
+    f.write(latex(Tableau(HG)))
+
     #Continues to run while part still has non-zero entires
     while any(x != 0 for r in ppart for x in r):
 
@@ -71,9 +76,14 @@ def Hillman_Grassl(part):
 
         ##4 Increment HG
         HG[prow][pcolstore] += 1
+
+        # print to latex
+        f.write(latex(Tableau(ppart)))
+        f.write(latex(Tableau(HG)))
+
     #Convert HG to a Tableau
     HGT = Tableau(HG)
-
+    f.close()
     return HGT
 
 def Inverse_HG(HG):
@@ -82,7 +92,7 @@ def Inverse_HG(HG):
     partition.
 
     Args:
-        HG: The Hillman-Grassl Tableau.  Must be a Tableau, list 
+        HG: The Hillman-Grassl Tableau.  Must be a Tableau, list
             of lists, or any other iterator of iterators.
 
     Returns:
@@ -92,6 +102,11 @@ def Inverse_HG(HG):
     HGL = [list(r) for r in HG]
     ppart = [[Integer(0)] * len(r) for r in HGL]
 
+    # print to latex
+    f = open('/home/nmiv/findme', 'w')
+    f.write(latex(Tableau(HGL)))
+    f.write(latex(Tableau(ppart)))
+
     # Continue adding paths while there are non-zero entries
     while any(x != 0 for x in r for r in HGL):
         # Find the north-eastern most entry in HGL
@@ -99,11 +114,11 @@ def Inverse_HG(HG):
         negj, i = min((-j, i) for i in range(len(HGL))
                       for j in range(len(HGL[i]))
                       if HGL[i][j] != 0)
-        
+
         # row and col are the coords of the entry in HGL
         row, col = i, -negj
         HGL[row][col] -= 1
-        
+
         # prow and pcol are the current entry in the path
         # start with prow == row, end with pcol == col
         prow = row
@@ -122,5 +137,10 @@ def Inverse_HG(HG):
             else:
                 ppart[prow][pcol] += 1
                 pcol -= 1
+
+        # print to latex
+        f.write(latex(Tableau(HGL)))
+        f.write(latex(Tableau(ppart)))
     # done, return a tableau
+    f.close()
     return Tableau(ppart)
