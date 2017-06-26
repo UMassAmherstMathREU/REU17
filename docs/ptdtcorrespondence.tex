@@ -1,0 +1,178 @@
+\documentclass{amsart}
+\usepackage{amsthm}
+\newcommand{\pt}[1]{\mathbb{P}_\mathrm{PT}^{#1}}
+\newcommand{\dt}[1]{\mathbb{P}_\mathrm{DT}^{#1}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\HG}[1]{\mathrm{HG}_{#1}}
+\newcommand{\hg}[1]{\mathrm{hg}_{#1}}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\begin{document}
+\section{Perliminaries and the Hillman-Grassl Algorithm}
+First, some basic notation:
+
+\begin{definition}
+  A \emph{weak reverse plane partition} with shape $\lambda$ is a
+  tableau of shape $\lambda$ containing natural numbers (including 0),
+  such that the rows and columns are weakly increasing.
+  
+  Let $\pt{\lambda}$ be the set of all weak reverse plane partitions
+  with shape $\lambda$.
+\end{definition}
+\begin{definition}
+  A plane partition with \emph{shape at infinity} $\lambda$, or
+  \emph{skew plane partition}, is a tableau containing entries from
+  $\ZZ_+ \cup \{\infty\}$, such that rows and columns are weakly
+  decreasing, and a cell contains $\infty$ iff it is contained in
+  $\lambda$.
+  
+  Let $\dt{\lambda}$ be the set of all plane partitions with the shape
+  at infinity $\lambda$.  In particular, $\dt{\emptyset}$ is the set of
+  all plane partitions without any shape at infinity.
+\end{definition}
+\begin{definition}
+  If $\pi \in \pt{\lambda}$, define the \emph{size} of $\pi$, written
+  $|\pi|$, to be the sum of all entries in $\pi$.  Similarly, if
+  $|\pi| \in \dt{\lambda}$, define $|\pi|$ to be the sum of all
+  non-infinity entries in $\pi$.
+\end{definition}
+
+Given $\lambda$, we wish to find a bijection
+$\Psi : \pt{\lambda} \times \dt{\emptyset} \to \dt{\lambda}$, such
+that $|\Psi(\mu, \pi) = |\pi| + |\mu|$.  In order to do this, we make
+use of the Hillman-Grassl Correspondence, which associates to all
+$\pi \in \pt{\lambda}$ a function $f : \lambda \to \NN$ (where
+$\lambda$ is identified with its diagram, as a subset of $\ZZ_+^2$).
+The size of $\pi$ is encoded as a weighted sum over values of $f$.  We
+also adapt this correspondence to work on $\dt{\lambda}$, giving a
+function with domain $\lambda^* = \ZZ_+^2 \setminus \lambda$.  In
+particular, for $\dt{\emptyset}$, the domain is just $\ZZ_+^2$.  Thus
+if we can find a bijection between $\lambda^*$ and the disjoint union
+$\lambda \sqcup \ZZ_+^2$ which respects the weights of each cell, this
+will yield a bijection between Hillman-Grassl functions, which in turn
+gives the bijection $\Psi$ we are looking for.
+
+To make this more precise, we have the following definitions:
+\begin{definition}
+  A \emph{Hillman-Grassl tableau} or \emph{HG-tableau} of shape
+  $\lambda$ is a tableau with entries from $\NN$, or equivalently a
+  function $f : \lambda \to \NN$.
+
+  Let $\HG{\lambda}$ denote the set of all HG-tableaux, and let
+  $\hg{\lambda} : \pt{\lambda} \to \HG{\lambda}$ denote the
+  Hillman-Grassl algorithm.
+\end{definition}
+\begin{definition}
+  Given a partition $\lambda$ and a cell $u \in \lambda$, the
+  \emph{hook length} $h_\lambda(u)$ is the number of cells in $\lambda$
+  directly below or to the right of $u$, including $u$.  That is,
+  \[
+    h_\lambda(u) = \lambda_i - j + \lambda_j' - i + 1
+  \]
+\end{definition}
+\begin{definition}
+  The \emph{size} of an HG-tableau $f \in \HG{\lambda}$ is the
+  weighted sum over hook lengths
+  \[
+    |f| = \sum_{u \in \lambda} h_\lambda(u) f(u)
+  \]
+\end{definition}
+With these definitions, we can write the defining property of the
+Hillman-Grassl algorithm as follows:
+\begin{theorem}
+  For all $\pi \in \pt{\lambda}$, $|\hg{\lambda}(\pi)| = |\pi|$.
+\end{theorem}
+
+\section{The modified Hillman-Grassl Algorthim}
+
+We now define a modified version of the Hillman-Grassl algorithm which
+operates on $\dt{\lambda}$.
+\begin{enumerate}
+\item Given $\pi \in \dt{\lambda}$, embed $\pi$ in a rectangular
+  tableau of shape $R$ by placing zeroes in the remaining cells.
+\item Reverse the rows and columns of $\pi$, and remove all
+  cells containing $\infty$ (which are at the bottom-right at this
+  point), to form a weak reverse plane partition $\pi'$.
+\item Run the Hillman-Grassl algorithm on $\pi'$, to create a
+  HG-tableau $f'$.
+\item Reverse the rows and columns of $f'$, to create a skew tableau
+  $f$, with shape $R \setminus \lambda$.  Extend this to a function
+  on all of $\lambda^* = \ZZ_+^2 \setminus \lambda$ by defining $f(u)
+  = 0$ if $u \notin R$.
+\end{enumerate}
+
+Before we go into the properties of this algorithm, let's see an
+example.
+\begin{example}
+  Example.
+\end{example}
+
+There are a few thing we need to verify about this algorithm.  Fisrt,
+we have some freedom in our choice of which rectangle $R$ to embed
+in.  However, since the Hillman-Grassl algorithm operates only on
+non-zero entries, enlarging $R$, which in turn pads $\pi'$ with
+zeroes, has only the effect of padding $f$ with zeroes.  Since we
+extend $f$ by adding zeroes anyway, this has no effect.
+
+Second, note that although the domain of $f$ is now infinite, $f$
+vanishes at all but finitely many points, so we can still define
+\[ |f| = \sum_{u \in \lambda^*} h_\lambda^*(u) f(u) \]
+where $h_\lambda^*$ denotes the \emph{reverse hook length}, or
+\[ h_\lambda^*(i, j) = j - \lambda_i + i - \lambda_j' - 1. \]
+In other words, the reverse hook lenght is the number of cells above
+and to the left of $u$, including $u$, but not in $\lambda$.  This
+corresponds to the hook length of a cell in $f'$, before reversing
+rows and columns.
+
+Let $\HG{\lambda}^*$ be the set of functions $f : \lambda^* \to
+\NN$ with finitely many non-zero entries, and let $\hg{\lambda}^* :
+\dt{\lambda} \to \HG{\lambda}^*$ be the modified Hillman-Grassl
+algorithm.  From our observation above, we have
+\[
+  |\hg{\lambda}^*(\pi)| = |\pi|
+\]
+for any $\pi \in \dt{\lambda}$.
+
+\subsection{The McMahon Formula Revisited}
+Using this modified algorithm, we immediately have the following:
+\begin{theorem}
+  Let $\lambda$ be a partition.  Then
+  \[
+    \sum_{\pi \in \dt{\lambda}} q^{|\pi|} =
+    \prod_{u \in \lambda^*} \frac{1}{1 - q^{h_\lambda^*(u)}}
+  \]
+\end{theorem}
+\begin{proof}
+  Picking a term $q^\alpha$ in the expansion of the right-hand side is
+  equivalent to picking values of $f(u)$, such that $\sum
+  h_\lambda^*(u)f(u) = \alpha$.
+\end{proof}
+
+For comparison, Theorem 7.22.1 in Stanley, which is proved using the
+original Hillman-Grassl algorithm, states
+\[
+  \sum_{\pi \in \pt{\lambda}} q^{|\pi|} =
+  \prod_{u \in \lambda} \frac{1}{1 - q^{h_\lambda(u)}}
+\]
+
+If we recall that $\dt{\emptyset}$ is the set of all non-skew plane
+partitions, we can consider the McMahon formula to be a special case
+of this formula.
+\begin{corollary}
+\[
+  \sum_{\pi \in \dt{\emptyset}} q^{|\pi|} =
+  \prod_{k \geq 1} \frac{1}{\left(1 - q^k\right)^k}
+\]
+\end{corollary}
+\begin{proof}
+  Since $\lambda = \emptyset$ here, the reverse hook length is
+  \[
+    h_\emptyset^*(i, j) = i + j - 1
+  \]
+  so that every hook length $k$ occurs exactly $k$ times.
+\end{proof}
+\end{document}

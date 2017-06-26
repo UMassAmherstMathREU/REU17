@@ -1,4 +1,5 @@
 *.aux
 *.log
-*.tex
 *.pyc
+*.pdf
+*.synctex.gz
