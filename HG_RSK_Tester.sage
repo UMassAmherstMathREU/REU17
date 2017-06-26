@@ -8,3 +8,5 @@ def Test_HG_RSK():
     print pp_to_mat(P)
     print
     print Hillman_Grassl(RP).pp()
+
+    #trace of plane partition should be the sum of all entries in HG.

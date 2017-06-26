@@ -33,9 +33,9 @@ def Hillman_Grassl(part):
     ##5. Loop steps 2-4
 
     # print to latex
-    f = open('/home/nmiv/findme', 'w')
-    f.write(latex(Tableau(ppart)))
-    f.write(latex(Tableau(HG)))
+    #f = open('/home/nmiv/findme', 'w')
+    #f.write(latex(Tableau(ppart)))
+    #f.write(latex(Tableau(HG)))
 
     #Continues to run while part still has non-zero entires
     while any(x != 0 for r in ppart for x in r):
@@ -78,12 +78,12 @@ def Hillman_Grassl(part):
         HG[prow][pcolstore] += 1
 
         # print to latex
-        f.write(latex(Tableau(ppart)))
-        f.write(latex(Tableau(HG)))
+        #f.write(latex(Tableau(ppart)))
+        #f.write(latex(Tableau(HG)))
 
     #Convert HG to a Tableau
     HGT = Tableau(HG)
-    f.close()
+    #f.close()
     return HGT
 
 def Inverse_HG(HG):
@@ -103,9 +103,9 @@ def Inverse_HG(HG):
     ppart = [[Integer(0)] * len(r) for r in HGL]
 
     # print to latex
-    f = open('/home/nmiv/findme', 'w')
-    f.write(latex(Tableau(HGL)))
-    f.write(latex(Tableau(ppart)))
+    #f = open('/home/nmiv/findme', 'w')
+    #f.write(latex(Tableau(HGL)))
+    #f.write(latex(Tableau(ppart)))
 
     # Continue adding paths while there are non-zero entries
     while any(x != 0 for x in r for r in HGL):
@@ -139,8 +139,8 @@ def Inverse_HG(HG):
                 pcol -= 1
 
         # print to latex
-        f.write(latex(Tableau(HGL)))
-        f.write(latex(Tableau(ppart)))
+        #f.write(latex(Tableau(HGL)))
+        #f.write(latex(Tableau(ppart)))
     # done, return a tableau
-    f.close()
+    #f.close()
     return Tableau(ppart)
