@@ -12,7 +12,7 @@
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
 \begin{document}
-\section{Perliminaries and the Hillman-Grassl Algorithm}
+\section{Preliminaries and the Hillman-Grassl Algorithm}
 First, some basic notation:
 
 \begin{definition}
@@ -108,7 +108,78 @@ operates on $\dt{\lambda}$.
 Before we go into the properties of this algorithm, let's see an
 example.
 \begin{example}
-  Example.
+  Let $\lambda = (1)$, and let $\pi$ be
+  \[
+    {\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+      \raisebox{-.6ex}{$
+        \begin{array}[b]{*{3}c}\cline{1-3}
+          \lr{\infty}&\lr{2}&\lr{2}\\\cline{1-3}
+          \lr{3}&\lr{1}\\\cline{1-2}
+          \lr{1}\\\cline{1-1}
+        \end{array}$}
+    }
+  \]
+  We can embed $\pi$ in a $3 \times 3$ rectangle:
+  \[
+    {\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+      \raisebox{-.6ex}{$
+        \begin{array}[b]{*{3}c}\cline{1-3}
+          \lr{\infty}&\lr{2}&\lr{2}\\\cline{1-3}
+          \lr{3}&\lr{1}&\lr{0}\\\cline{1-3}
+          \lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+        \end{array}$}
+    }
+  \]
+  And form $\pi'$ by flipping rows and columns, and removing $\infty$:
+  \[
+    {\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+      \raisebox{-.6ex}{$
+        \begin{array}[b]{*{3}c}\cline{1-3}
+          \lr{0}&\lr{0}&\lr{1}\\\cline{1-3}
+          \lr{0}&\lr{1}&\lr{3}\\\cline{1-3}
+          \lr{2}&\lr{2}\\\cline{1-2}
+        \end{array}$}
+    }
+  \]
+  We can now run the Hillman-Grassl algorithm, to get a tableau of the
+  same shape:
+  \[
+    {\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+      \raisebox{-.6ex}{$
+        \begin{array}[b]{*{3}c}\cline{1-3}
+          \lr{0}&\lr{0}&\lr{1}\\\cline{1-3}
+          \lr{1}&\lr{0}&\lr{1}\\\cline{1-3}
+          \lr{1}&\lr{0}\\\cline{1-2}
+        \end{array}$}
+    }
+  \]
+  We invert the rows and columns back to obtain a skew tableau:
+  \[
+    {\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+      \raisebox{-.6ex}{$
+        \begin{array}[b]{*{3}c}\cline{2-3}
+          &\lr{0}&\lr{1}\\\cline{1-3}
+          \lr{1}&\lr{0}&\lr{1}\\\cline{1-3}
+          \lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+        \end{array}$}
+    }
+  \]
+  We can consider this a function $f$ from the cells of this tableau,
+  indexed by $\ZZ_+^2$ to $\NN$.  We can extend this to a function on
+  all $\ZZ_+^2 \setminus \{(1, 1)\}$ by adding zeros, so values of $f$
+  are given by
+  \[
+    {\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+      \raisebox{-.6ex}{$
+        \begin{array}[b]{*{5}c}\cline{2-5}
+          &\lr{0}&\lr{1}&\lr{0}&\cdots\\\cline{1-5}
+          \lr{1}&\lr{0}&\lr{1}&\lr{0}&\cdots\\\cline{1-5}
+          \lr{1}&\lr{0}&\lr{0}&\lr{0}&\cdots\\\cline{1-5}
+          \lr{0}&\lr{0}&\lr{0}&\lr{0}&\cdots\\\cline{1-5}
+          \lr{\vdots} & \lr{\vdots} & \lr{\vdots} & \lr{\vdots} & \ddots
+        \end{array}$}
+    }
+  \]
 \end{example}
 
 There are a few thing we need to verify about this algorithm.  Fisrt,
@@ -136,6 +207,45 @@ algorithm.  From our observation above, we have
   |\hg{\lambda}^*(\pi)| = |\pi|
 \]
 for any $\pi \in \dt{\lambda}$.
+
+\begin{example}
+  Let's continue with the example above.  First, we compute the
+  reverse hook lengths.
+  \begin{center}
+    \begin{tabular}{c c}
+      $f(u)$ & $h_\lambda^*(u)$ \\
+      \rule{0pt}{8ex}
+      $
+      {\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+      \raisebox{-.6ex}{$
+      \begin{array}[b]{*{3}c}\cline{2-3}
+        &\lr{0}&\lr{1}\\\cline{1-3}
+        \lr{1}&\lr{0}&\lr{1}\\\cline{1-3}
+        \lr{1}&\lr{0}&\lr{0}\\\cline{1-3}
+      \end{array}$}
+      }
+      $ & $
+          {\def\lr#1{\multicolumn{1}{|@{\hspace{.6ex}}c@{\hspace{.6ex}}|}{\raisebox{-.3ex}{$#1$}}}
+          \raisebox{-.6ex}{$
+          \begin{array}[b]{*{3}c}\cline{2-3}
+            &\lr{1}&\lr{2}\\\cline{1-3}
+            \lr{1}&\lr{3}&\lr{4}\\\cline{1-3}
+            \lr{2}&\lr{4}&\lr{5}\\\cline{1-3}
+          \end{array}$}
+      }
+      $
+    \end{tabular}
+  \end{center}
+  Now we have
+  \[
+    |f| = (1)(2) + (1)(1) + (1)(4) + (1)(2) = 9
+  \]
+  The original plane partition had
+  \[
+    |\pi| = 2 + 2 + 3 + 1 + 1 = 9
+  \]
+  as expected.
+\end{example}
 
 \subsection{The McMahon Formula Revisited}
 Using this modified algorithm, we immediately have the following:
@@ -175,4 +285,80 @@ of this formula.
   \]
   so that every hook length $k$ occurs exactly $k$ times.
 \end{proof}
+
+\section{A Bijection on Hooks}
+We have defined bijections $\hg{\lambda} : \pt{\lambda} \to
+\HG{\lambda}$ and $\hg{\lambda}^* : \dt{\lambda} \to \HG{\lambda}^*$.
+We now want to find a bijection $\HG{\lambda} \times \HG{\emptyset}^*
+\to \HG{\lambda}^*$.  Equivalently, we want to prove
+\[
+  \left(\prod_{u \in \lambda} \frac{1}{1-q^{h_\lambda(u)}}\right)
+  \left(\prod_{i \geq 1} \frac{1}{(1-q^k)^k}\right) =
+  \prod_{u \in \lambda^*} \frac{1}{1-q^{h_\lambda^*(u)}}
+\]
+The nicest way to do with would be to directly match up terms in the
+product.  This means showing that for all $k \in \ZZ_+$, $\lambda$ has
+$k$ more outer $k$-hooks than inner $k$-hooks.  
+
+To make the bijection explicit, we need to find
+$\phi: \lambda^* \to \lambda \sqcup \ZZ_+^2$, such that if
+$\phi(u) \in \lambda$,
+\[ h_\lambda(\phi(u)) = h_\lambda^*(u) \]
+and if $\phi(u) \in \ZZ_+^2$,
+\[ h_\emptyset^*(\phi(u)) = h_\lambda^*(u) \]
+Once we have this, we can define $\Phi : \HG{\lambda} \times
+\HG{\emptyset}^* \to \HG{\lambda}^*$ in the natural way, by
+\[ 
+  [\Phi(f, g)](u) = \begin{cases}
+    f(\phi(u)), &\quad \phi(u) \in \lambda \\
+    g(\phi(u)), &\quad \phi(u) \in \ZZ_+^2
+  \end{cases}
+\]
+This way, we have
+\[
+  |\Phi(f, g)| =
+  \sum_{u \in \lambda^*} [\Phi(f, g)](u)h_\lambda^*(u) =
+  \sum_{u \in \lambda} f(u)h_\lambda(u) + 
+  \sum_{u \in \ZZ_+^2} g(u)h_\emptyset^*(u) =
+  |f| + |g|
+\]
+as desired.
+\subsection{Binary Sequence Coding for Partitions}
+The simplest proof we have seen for this problem involves coding a
+partition $\lambda$ as an infinite binary sequence
+\[ C_\lambda = \cdots c_{-2}c_{-1}c_0c_1c_2 \cdots \]
+This is presented as a solution to exercise 7.107(a) in Stanley, 
+The encoding is defined in the following way: Consider the outline of
+the Young diagram of $\lambda$, extended to infinity on either side.
+Mark any vertical segment with a $0$ and any horizontal segment with a
+$1$, and follow the path from the bottom up to the right.  Thus, the
+empty partition has the sequence
+\[ C_\emptyset = \cdots 00001111 \cdots \]
+The partition $\lambda = (1)$ has the sequence
+\[ C_{(1)} = \cdots 00010111 \cdots \]
+and the partition $\lambda = (3, 1)$ has the sequence
+\[ C_{(3, 1)}\cdots 00010110111 \cdots \]
+Note that shifting the sequence by any amount defines the same
+partition, and beyond that the correspondence is bijective.  Also note
+that the sequence always begins with an infinite string of 0's, and
+ends with an infinite string of 1's, with only a finite amount of
+``interesting'' things happening in the middle.
+
+Now, any hook of lenght $p$ on the \emph{inside} of $\lambda$
+corresponds to a strip of length $p$ on the border.  Further, this
+corresponds to having $c_i = 1$ and $c_{i+p} = 0$ for some $i$.
+Similarly, a hook of lenght $p$ \emph{outside} of $\lambda$
+corresponds to having $c_i = 0$ and $c_{i+p} = 1$.  (draw the
+picture!)  It should make sense that the former happens only finitely
+many times, and the latter happens infinitely many times (although for
+a fixed $p$, both still happen only a finite number of times).
+
+Now, we will show that for fixed $p$, there are $p$ more outer hooks
+than inner hooks.  Decompose $C_\lambda$ into
+\[ C^j_\lambda = \cdots c_{-2p+j}c_{-p+j}c_jc_{p+j}c_{2p+j}\cdots \]
+for $0 \leq j < p$.  Then any inner hook is the subsequence $10$
+inside some $C^j$, and any outer hook is the subsequence $01$.  Since
+each $C^j$ begins with 0's and ends with 1's, there must be exactly
+one more $01$ than $10$ in each.  Thus there are $p$ more outer hooks
+than inner hooks.
 \end{document}

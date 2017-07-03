@@ -1,3 +1,4 @@
+# -*- mode: Sage -*-
 from sage.combinat.tableau import Tableau
 from sage.rings.integer import Integer
 
