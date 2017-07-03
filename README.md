@@ -7,7 +7,7 @@ This is a library for manipulating partitions in Python/Sage.
 
 ## How to Use
 
-Just import <insert file name here> to access the important functions
+Just import the planepartitions module to access the important functions
 
 ## How it Works
 
