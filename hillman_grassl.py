@@ -109,7 +109,7 @@ def Inverse_HG(HG):
     #f.write(latex(Tableau(ppart)))
 
     # Continue adding paths while there are non-zero entries
-    while any(x != 0 for x in r for r in HGL):
+    while any(x != 0 for r in HGL for x in r):
         # Find the north-eastern most entry in HGL
         # Take advantage of how python orders tuples to do this
         negj, i = min((-j, i) for i in range(len(HGL))
