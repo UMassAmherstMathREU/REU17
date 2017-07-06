@@ -1,3 +1,4 @@
+# -*- mode: sage -*-
 """
 This file contains methods to compute the weights of reverse plane
 partitions, and skew plane partitions.  Given fixed integers a, b, c
