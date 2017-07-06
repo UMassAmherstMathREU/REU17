@@ -2,6 +2,9 @@ from sage.combinat.tableau import Tableau
 from hillman_grassl.py import Hillman_Grassl
 
 class ReversePlanePartition(Tableau):
+    '''
+    
+    '''
 
     @staticmethod
     def __classcall_private__(cls, t):
