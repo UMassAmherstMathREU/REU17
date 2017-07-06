@@ -12,6 +12,8 @@
 \newcommand{\hg}[1]{\mathrm{hg}_{#1}}
 \newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}{Lemma}
 \author{Edward McCormick}
 
 \title{Hillman Grassl Algorithm}
@@ -451,4 +453,16 @@ $
 
 \end{multicols}
 \end{figure}
+
+Two interesting results of the Hillman-Grassl Algorithm are as follows:
+
+\begin{lemma} 
+	For all $\pi \in \dt{\emptyset}$
+	\[
+	tr(\pi) = |\hg{\emptyset}^*(\pi)|
+	\]
+\end{lemma}
+\begin{lemma}
+	The operations of $\hg{\emptyset}^*$ and transposition are commutative.
+\end{lemma}
 \end{document}
