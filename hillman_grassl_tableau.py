@@ -26,11 +26,16 @@ class HillmanGrasslTableau(Tableau):
         HG = HillmanGrasslTableaux_all(t.shape())
         return HG.element_class(HG, t)
 
-def _hg_size(t):
-    shape = Partition([len(r) for r in t])
-    return sum(t[i][j] * shape.hook_length(i, j)
-               for i, j in shape.cells())
-        
+    def hg_size(self):
+        shape = self.shape()
+        return sum(t[i][j] * shape.hook_length(i, j)
+                   for i, j in shape.cells())
+
+    def to_ReversePlanePartition(self):
+        from reverse_plane_partition import ReversePlanePartition
+        from hillman_grassl import Inverse_HG
+        return ReversePlanePartition(Inverse_HG(self))
+
 class HillmanGrasslTableaux(Tableaux):
     Element = HillmanGrasslTableau
 
@@ -61,7 +66,7 @@ class HillmanGrasslTableaux(Tableaux):
 
         if tableau not in self:
             raise ValueError("%s is not in %s" % (tableau, self))
-        
+
         return self.element_class(self, tableau)
 
 class HillmanGrasslTableaux_size(HillmanGrasslTableaux):
@@ -76,12 +81,12 @@ class HillmanGrasslTableaux_size(HillmanGrasslTableaux):
 
     def __contains__(self, x):
         return (x in HillmanGrasslTableaux_all(self._shape) and
-                _hg_size(Tableau(x)) == self._size)
-    
+                HillmanGrasslTableau(x).hg_size() == self._size)
+
     def _weighted_integer_vectors(self):
         hooks = sum(self._shape.hook_lengths(), [])
         return WeightedIntegerVectors(self._size, hooks)
-    
+
     def __iter__(self):
         return (self.from_integer_vector(vec)
                 for vec in self._weighted_integer_vectors())

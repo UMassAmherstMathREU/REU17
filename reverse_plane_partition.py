@@ -1,8 +1,16 @@
-from sage.combinat.tableau import Tableau
-from hillman_grassl.py import Hillman_Grassl
+from sage.combinat.tableau import Tableau, Tableaux
+from sage.combinat.partition import Partition, Partitions
+from sage.sets.disjoint_union_enumerated_sets import \
+    DisjointUnionEnumeratedSets
+from sage.sets.family import Family
+from sage.rings.all import NN
+from sage.categories.infinite_enumerated_sets import \
+    InfiniteEnumeratedSets
+from sage.categories.finite_enumerated_sets import FiniteEnumeratedSets
+from sage.categories.sets_with_grading import SetsWithGrading
+from hillman_grassl import Hillman_Grassl
 
 class ReversePlanePartition(Tableau):
-
     @staticmethod
     def __classcall_private__(cls, t):
         if isinstance(t, ReversePlanePartition):
@@ -13,13 +21,17 @@ class ReversePlanePartition(Tableau):
         shape = tableau.shape()
         if t not in ReversePlanePartitions_all(shape):
             raise ValueError(
-                "%s is not a Reverse Plane Partition" % t)
+                "%s is not a reverse plane partition" % t)
 
         RPP = ReversePlanePartitions(shape)
         return RPP.element_class(RPP, tableau)
 
+    def partition_size(self):
+        return sum(c for r in c for r in self)
+
     def to_HilmanGrasslTableau(self):
-        return Hillman_Grassl(self)
+        from hillman_grassl_tableau import HillmanGrasslTableau
+        return HillmanGrasslTableau(Hillman_Grassl(self))
 
 class ReversePlanePartitions(Tableaux):
     Element = ReversePlanePartition
@@ -35,24 +47,28 @@ class ReversePlanePartitions(Tableaux):
         elif size not in NonNegativeIntegers():
             raise ValueError("Size must be a non-negative integer")
 
-        return (super(ReversePlanePartitions, cls)
-                .__classcall__(cls, shape_part, size))
+        return ReversePlanePartitions_size(shape_part, size)
 
+class ReversePlanePartitions_size(ReversePlanePartitions):
     def __init__(self, shape, size):
         self._size = size
         self._shape = shape
         Parent.__init__(self, category=FiniteEnumeratedSets())
 
+    def _hillman_grassl(self):
+        return HillmanGrasslTableaux(self._shape, self._size)
+
     def __iter__(self):
-        return (ReversePlanePartition(vec=v, shape=self._shape)
-                for v in self._weighted_integer_vectors())
+        return (hg.to_ReversePlanePartition()
+                for hg in self._hillman_grassl())
 
     def cardinality(self):
-        return self._weighted_integer_vectors().cardinality()
+        return self._hillman_grassl().cardinality()
 
     def random_element(self):
-        v = self._weighted_integer_vectors().random_element()
-        return ReversePlanePartition(vec=v, shape=self._shape)
+        hg = self._hillman_grassl().random_element()
+        rpp = hg.to_ReversePlanePartition()
+        return self.element_class(self, rpp)
 
     def __contains__(self, x):
         return (x in ReversePlanePartitions_all(self._shape) and
@@ -62,23 +78,27 @@ class ReversePlanePartitions(Tableaux):
         return ("Reverse Plane Partitions of shape %s and size %d"
                 % (self._shape, self._size))
 
-class ReversePlanePartitions_all(DisjointUnionEnumeratedSets):
-
+class ReversePlanePartitions_all(ReversePlanePartitions,
+                                 DisjointUnionEnumeratedSets):
     def __init__(self, shape):
         from functools import partial
         self._shape = shape
-        F = Family(NonNegativeIntegers(),
-                   partial(ReversePlanePartitions, shape))
+        F = Family(NN, partial(ReversePlanePartitions, shape))
         cat = (SetsWithGrading(), InfiniteEnumeratedSets())
         DisjointUnionEnumeratedSets.__init__(self, F, facade=True,
                                              keepkey=False,
                                              category=cat)
 
     def __contains__(self, x):
-        return (x in Tableaux() and
-                all(c in NonNegativeIntegers()
-                    for r in x for c in r) and
-                Tableau(x).shape() == self._shape)
+        if x not in Tableaux():
+            return False
+        if any(c not in NN for r in x for c in r):
+            return False
+        tab = Tableau(x)
+        if tab.shape() != self._shape:
+            return False
+        rows_cols = list(tab) + list(tab.conjugate())
+        return all(a <= b for row in tab for a, b in zip(row, row[1:]))
 
     def subset(self, size=None):
         if size is None:
