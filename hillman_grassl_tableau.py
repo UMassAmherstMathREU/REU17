@@ -13,6 +13,39 @@ from sage.categories.finite_enumerated_sets import FiniteEnumeratedSets
 from sage.categories.sets_with_grading import SetsWithGrading
 
 class HillmanGrasslTableau(Tableau):
+    r"""
+    A class to model Hillman-Grassl Tableau
+
+    INPUT:
+
+    - ``t`` -- a Tableau
+
+    OUTPUT:
+
+    - A HillmanGrasslTableau object constructed from ``t``.
+
+    description of HillmanGrasslTableau
+
+    EXAMPLES::
+
+        sage: t = HillmanGrasslTableau([[1,3,2],[2,1]]); t
+        [[1, 3, 2], [2, 1]]
+        sage: t.shape()
+        [3, 2]
+        sage: t.pp() # pretty print
+        1 3 2
+        2 1
+
+        sage: HillmanGrasslTableau([]) # The empty tableau
+        []
+
+    TESTS::
+
+        sage: HillmanGrasslTableau([[-1,1,2]])
+        Traceback (most recent call last):
+        ...
+        ValueError: [[-1, 1, 2]] is not a Hillman-Grassl tableau
+    """
     @staticmethod
     def __classcall_private__(cls, t=None):
         if isinstance(t, HillmanGrasslTableau):
@@ -28,7 +61,7 @@ class HillmanGrasslTableau(Tableau):
 
     def hg_size(self):
         shape = self.shape()
-        return sum(t[i][j] * shape.hook_length(i, j)
+        return sum(self[i][j] * shape.hook_length(i, j)
                    for i, j in shape.cells())
 
     def to_ReversePlanePartition(self):
@@ -37,6 +70,69 @@ class HillmanGrasslTableau(Tableau):
         return ReversePlanePartition(Inverse_HG(self))
 
 class HillmanGrasslTableaux(Tableaux):
+
+    r"""
+    A factory class for the various classes of Hillman-Grassl tableaux.
+
+    INPUT:
+
+    - ``shape`` -- the shape of the tableaux
+    - ``size`` -- the size of the tableaux
+
+    OUTPUT:
+
+    - The appropriate class, after checking basic consistency tests.
+
+    description of HillmanGrasslTableaux
+
+    EXAMPLES::
+
+    sage: HG = HillmanGrasslTableaux([2,1]);HG.cardinality()
+    +Infinity
+
+    sage: HG = HillmanGrasslTableaux([4,2], 2);HG.cardinality()
+    5
+
+    sage: HG = HillmanGrasslTableaux([4,3],3)
+    sage: HG.random_element()   #random
+    [[0, 0, 0, 1], [1, 0, 1]]
+
+    sage: HG = HillmanGrasslTableaux([5,2],4);HG
+    Hillman-Grassl tableaux of shape [5, 2] and size 4
+
+    sage: HG = HillmanGrasslTableaux([3,2],4);HG.list()
+    [[[1, 0, 0], [0, 0]],
+     [[0, 1, 0], [0, 1]],
+     [[0, 1, 1], [0, 0]],
+     [[0, 0, 0], [2, 0]],
+     [[0, 0, 0], [1, 2]],
+     [[0, 0, 1], [1, 1]],
+     [[0, 0, 2], [1, 0]],
+     [[0, 0, 0], [0, 4]],
+     [[0, 0, 1], [0, 3]],
+     [[0, 0, 2], [0, 2]],
+     [[0, 0, 3], [0, 1]],
+     [[0, 0, 4], [0, 0]]]
+
+     sage: ([[0,0,1],[0,1]]) in HillmanGrasslTableaux([3,2], 2)
+     True
+     sage: Tableau([[0,0,1],[0,1]]) in HillmanGrasslTableaux([3,2], 2)
+     True
+     sage: ([[0,0,-1],[0,1]]) in HillmanGrasslTableaux([3,2], 2)
+     False
+     sage: ([[0,0,-1],[0,1]]) in HillmanGrasslTableaux([4,2], 2)
+     False
+
+     sage: HG = HillmanGrasslTableaux([5,1]);HG.subset()
+     Hillman-Grassl tableaux of shape [5, 1]
+
+     sage: HG = HillmanGrasslTableaux([5,1]);HG.subset(2)
+     Hillman-Grassl tableaux of shape [5, 1] and size 2
+
+    TESTS::
+
+    """
+
     Element = HillmanGrasslTableau
 
     @staticmethod
@@ -97,7 +193,7 @@ class HillmanGrasslTableaux_size(HillmanGrasslTableaux):
     def random_element(self):
         vec = self._weighted_integer_vectors().random_element()
         return self.from_integer_vector(vec)
- 
+
 class HillmanGrasslTableaux_all(HillmanGrasslTableaux,
                                 DisjointUnionEnumeratedSets):
     def __init__(self, shape):
