@@ -1,37 +1,30 @@
 # -*- mode: sage -*-
 
+from sage.combinat.tableau import Tableau, Tableaux
+from sage.combinat.partition import Partition
+from sage.combinat.integer_vector import IntegerVectors
+from sage.combinat.integer_vector_weighted import WeightedIntegerVectors
+from sage.sets.disjoint_union_enumerated_sets import \
+    DisjointUnionEnumeratedSets
+from sage.rings.all import NN
+from sage.categories.infinite_enumerated_sets import \
+    InfiniteEnumeratedSets
+from sage.categories.finite_enumerated_sets import FiniteEnumeratedSets
+from sage.categories.sets_with_grading import SetsWithGrading
+
 class HillmanGrasslTableau(Tableau):
     @staticmethod
-    def __classcall_private__(cls, t=None, vec=None, shape=None):
-        if ((t is None) == (vec is None) or
-            (vec is None) != (shape is None)):
+    def __classcall_private__(cls, t=None):
+        if isinstance(t, HillmanGrasslTableau):
+            return t
+        if t not in Tableaux():
+            raise ValueError("%s is not a tableau" % t)
+        t = Tableau(t)
+        if t not in HillmanGrasslTableaux_all(t.shape()):
             raise ValueError(
-                "Incorrect syntax for HillmanGrasslTableau")
-        elif t is not None:
-            if isinstance(t, HillmanGrasslTableau):
-                return t
-            if t not in Tableaux():
-                raise ValueError("%s is not a tableau" % t)
-            tableau = Tableau(t)
-            shape = tableau.shape()
-            if t not in HillmanGrasslTableaux_all(shape):
-                raise ValueError(
-                    "%s is not a Hillman-Grassl tableau" % t)
-        else:
-            if vec not in IntegerVectors():
-                raise ValueError("%s is not an integer vector" % vec)
-            if shape not in Partitions(len(vec)):
-                raise ValueError("%s is not a partition of %d" %
-                                 (shape, len(vec)))
-            tableau = []
-            pos = 0
-            for rowlen in shape:
-                tableau += [vec[pos:(pos + rowlen)]]
-                pos += rowlen
-                
-        size = _hg_size(tableau)
-        HG = HillmanGrasslTableaux(shape, size)
-        return HG.element_class(HG, tableau)
+                "%s is not a Hillman-Grassl tableau" % t)
+        HG = HillmanGrasslTableaux_all(t.shape())
+        return HG.element_class(HG, t)
 
 def _hg_size(t):
     shape = Partition([len(r) for r in t])
@@ -52,9 +45,26 @@ class HillmanGrasslTableaux(Tableaux):
         elif size not in NonNegativeIntegers():
             raise ValueError("Size must be a non-negative integer")
 
-        return (super(HillmanGrasslTableaux, cls)
-                .__classcall__(cls, shape_part, size))
+        return HillmanGrasslTableaux_size(shape_part, size)
 
+    def from_integer_vector(self, vec):
+        if vec not in IntegerVectors():
+            raise ValueError("%s is not an integer vector" % vec)
+        if self._shape.size() != len(vec):
+            raise ValueError("%s is not length %d" %
+                             (vec, self._shape.size()))
+        tableau = []
+        pos = 0
+        for rowlen in self._shape:
+            tableau += [vec[pos:(pos + rowlen)]]
+            pos += rowlen
+
+        if tableau not in self:
+            raise ValueError("%s is not in %s" % (tableau, self))
+        
+        return self.element_class(self, tableau)
+
+class HillmanGrasslTableaux_size(HillmanGrasslTableaux):
     def __init__(self, shape, size):
         self._size = size
         self._shape = shape
@@ -67,28 +77,28 @@ class HillmanGrasslTableaux(Tableaux):
     def __contains__(self, x):
         return (x in HillmanGrasslTableaux_all(self._shape) and
                 _hg_size(Tableau(x)) == self._size)
-
+    
     def _weighted_integer_vectors(self):
         hooks = sum(self._shape.hook_lengths(), [])
         return WeightedIntegerVectors(self._size, hooks)
     
     def __iter__(self):
-        return (HillmanGrasslTableau(vec=v, shape=self._shape)
-                for v in self._weighted_integer_vectors())
+        return (self.from_integer_vector(vec)
+                for vec in self._weighted_integer_vectors())
 
     def cardinality(self):
         return self._weighted_integer_vectors().cardinality()
 
     def random_element(self):
-        v = self._weighted_integer_vectors().random_element()
-        return HillmanGrasslTableau(vec=v, shape=self._shape)
-
-class HillmanGrasslTableaux_all(DisjointUnionEnumeratedSets):
+        vec = self._weighted_integer_vectors().random_element()
+        return self.from_integer_vector(vec)
+ 
+class HillmanGrasslTableaux_all(HillmanGrasslTableaux,
+                                DisjointUnionEnumeratedSets):
     def __init__(self, shape):
         from functools import partial
         self._shape = shape
-        F = Family(NonNegativeIntegers(),
-                   partial(HillmanGrasslTableaux, shape))
+        F = Family(NN, partial(HillmanGrasslTableaux, shape))
         cat = (SetsWithGrading(), InfiniteEnumeratedSets())
         DisjointUnionEnumeratedSets.__init__(self, F, facade=True,
                                              keepkey=False,
@@ -96,8 +106,7 @@ class HillmanGrasslTableaux_all(DisjointUnionEnumeratedSets):
 
     def __contains__(self, x):
         return (x in Tableaux() and
-                all(c in NonNegativeIntegers()
-                    for r in x for c in r) and
+                all(c in NN for r in x for c in r) and
                 Tableau(x).shape() == self._shape)
 
     def subset(self, size=None):
