@@ -1,9 +1,10 @@
 # -*- mode: sage -*-
 
 from sage.combinat.tableau import Tableau, Tableaux
-from sage.combinat.partition import Partition
+from sage.combinat.partition import Partition, Partitions
 from sage.combinat.integer_vector import IntegerVectors
 from sage.combinat.integer_vector_weighted import WeightedIntegerVectors
+from sage.sets.family import Family
 from sage.sets.disjoint_union_enumerated_sets import \
     DisjointUnionEnumeratedSets
 from sage.rings.all import NN
@@ -11,6 +12,7 @@ from sage.categories.infinite_enumerated_sets import \
     InfiniteEnumeratedSets
 from sage.categories.finite_enumerated_sets import FiniteEnumeratedSets
 from sage.categories.sets_with_grading import SetsWithGrading
+from sage.structure.parent import Parent
 
 class HillmanGrasslTableau(Tableau):
     r"""
@@ -149,7 +151,7 @@ class HillmanGrasslTableaux(Tableaux):
 
         if size is None:
             return HillmanGrasslTableaux_all(shape_part)
-        elif size not in NonNegativeIntegers():
+        elif size not in NN:
             raise ValueError("Size must be a non-negative integer")
 
         return HillmanGrasslTableaux_size(shape_part, size)

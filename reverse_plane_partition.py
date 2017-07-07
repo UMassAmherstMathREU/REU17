@@ -8,6 +8,7 @@ from sage.categories.infinite_enumerated_sets import \
     InfiniteEnumeratedSets
 from sage.categories.finite_enumerated_sets import FiniteEnumeratedSets
 from sage.categories.sets_with_grading import SetsWithGrading
+from sage.structure.parent import Parent
 from hillman_grassl import Hillman_Grassl
 
 class ReversePlanePartition(Tableau):
@@ -141,7 +142,7 @@ class ReversePlanePartitions(Tableaux):
 
         if size is None:
             return ReversePlanePartitions_all(shape_part)
-        elif size not in NonNegativeIntegers():
+        elif size not in NN:
             raise ValueError("Size must be a non-negative integer")
 
         return ReversePlanePartitions_size(shape_part, size)
@@ -153,6 +154,7 @@ class ReversePlanePartitions_size(ReversePlanePartitions):
         Parent.__init__(self, category=FiniteEnumeratedSets())
 
     def _hillman_grassl(self):
+        from hillman_grassl_tableau import HillmanGrasslTableaux
         return HillmanGrasslTableaux(self._shape, self._size)
 
     def __iter__(self):
