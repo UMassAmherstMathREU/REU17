@@ -5,7 +5,6 @@ Run doctests
 """
 
 from sage.doctest.control import DocTestDefaults, DocTestController
-import os
 
 # Add any new files to this list
 files = [

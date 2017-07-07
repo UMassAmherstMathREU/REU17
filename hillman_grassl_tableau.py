@@ -201,7 +201,7 @@ class HillmanGrasslTableaux_all(HillmanGrasslTableaux,
     def __init__(self, shape):
         from functools import partial
         self._shape = shape
-        F = Family(NN, partial(HillmanGrasslTableaux, shape))
+        F = Family(NN, partial(HillmanGrasslTableaux_size, shape))
         cat = (SetsWithGrading(), InfiniteEnumeratedSets())
         DisjointUnionEnumeratedSets.__init__(self, F, facade=True,
                                              keepkey=False,
