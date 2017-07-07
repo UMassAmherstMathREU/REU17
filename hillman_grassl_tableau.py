@@ -26,7 +26,8 @@ class HillmanGrasslTableau(Tableau):
 
     - A HillmanGrasslTableau object constructed from ``t``.
 
-    description of HillmanGrasslTableau
+    A Hillman-Grassl tableau is a tableau whose entries are non-negative
+    integers and whose size is a weighted sum over hook lengths.
 
     EXAMPLES::
 
@@ -34,11 +35,11 @@ class HillmanGrasslTableau(Tableau):
         [[1, 3, 2], [2, 1]]
         sage: HG.shape()
         [3, 2]
-        sage: HG.pp() # pretty print
+        sage: HG.pp()
         1 3 2
         2 1
 
-        sage: HillmanGrasslTableau([]) # The empty tableau
+        sage: HillmanGrasslTableau([])
         []
 
         sage: HG = HillmanGrasslTableau([[1,2,0],[1,0,1],[1]])
@@ -91,7 +92,8 @@ class HillmanGrasslTableaux(Tableaux):
 
     - The appropriate class, after checking basic consistency tests.
 
-    description of HillmanGrasslTableaux
+    A Hillman-Grassl tableau is a tableau whose entries are non-negative
+    integers and whose size is a weighted sum over hook lengths.
 
     EXAMPLES::
 
@@ -128,7 +130,7 @@ class HillmanGrasslTableaux(Tableaux):
      True
      sage: ([[0,0,-1],[0,1]]) in HillmanGrasslTableaux([3,2], 2)
      False
-     sage: ([[0,0,-1],[0,1]]) in HillmanGrasslTableaux([4,2], 2)
+     sage: ([[0,0,1],[0,1]]) in HillmanGrasslTableaux([4,2], 2)
      False
 
      sage: HG = HillmanGrasslTableaux([5,1]);HG.subset()

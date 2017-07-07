@@ -23,24 +23,27 @@ class ReversePlanePartition(Tableau):
 
     - A ReversePlanePartition object constructed from ``t``.
 
-    description of ReversePlanePartition
+    A reverse plane partition is a tableau whose entries are non-negative
+    integers which are weakly increasing in rows and columns.
 
     EXAMPLES::
 
-        sage: RPP = ReversePlanePartition([[0,1,3],[2,4,4],[3]]); t
+        sage: RPP = ReversePlanePartition([[0,1,3],[2,4,4],[3]]); RPP
         [[0, 1, 3], [2, 4, 4], [3]]
         sage: RPP.shape()
-        [3, 3, 2]
-        sage: RPP.pp() # pretty print
+        [3, 3, 1]
+        sage: RPP.pp()
         0 1 3
         2 4 4
         3
         sage: RPP.partition_size()
         17
-        sage: RPP.to_HilmanGrasslTableau()
-        [[1, 2, 0], [1, 0, 1], [1]]
+        sage: RPP.to_HillmanGrasslTableau().pp()
+        1  2  0
+        1  0  1
+        1
 
-        sage: ReversePlanePartition([]) # The empty tableau
+        sage: ReversePlanePartition([])
         []
 
     TESTS::
@@ -62,9 +65,9 @@ class ReversePlanePartition(Tableau):
         return RPP.element_class(RPP, tableau)
 
     def partition_size(self):
-        return sum(c for r in c for r in self)
+        return sum(c for r in self for c in r)
 
-    def to_HilmanGrasslTableau(self):
+    def to_HillmanGrasslTableau(self):
         from hillman_grassl_tableau import HillmanGrasslTableau
         return HillmanGrasslTableau(Hillman_Grassl(self))
 
@@ -82,31 +85,32 @@ class ReversePlanePartitions(Tableaux):
 
     - The appropriate class, after checking basic consistency tests.
 
-    description of ReversePlanePartitions
+    A reverse plane partition is a tableau whose entries are non-negative
+    integers which are weakly increasing in rows and columns.
 
     EXAMPLES::
 
     sage: RPP = ReversePlanePartitions([2,1]);RPP.cardinality()
     +Infinity
-#Do these next
+
     sage: RPP = ReversePlanePartitions([4,2], 2);RPP.cardinality()
     5
 
     sage: RPP = ReversePlanePartitions([4,3],3)
     sage: RPP.random_element()   #random
-    [[0, 0, 0, 1], [1, 0, 1]]
+    [[0, 0, 0, 2], [0, 0, 1]]
 
     sage: RPP = ReversePlanePartitions([5,2],4);RPP
     Reverse Plane Partitions of shape [5, 2] and size 4
 
-    sage: RPP = ReversePlanePartitions([3,2],4);HG.list()
-    [[[1, 0, 0], [0, 0]],
-     [[0, 1, 0], [0, 1]],
-     [[0, 1, 1], [0, 0]],
-     [[0, 0, 0], [2, 0]],
-     [[0, 0, 0], [1, 2]],
-     [[0, 0, 1], [1, 1]],
-     [[0, 0, 2], [1, 0]],
+    sage: RPP = ReversePlanePartitions([3,2],4);RPP.list()
+    [[[0, 1, 1], [1, 1]],
+     [[0, 1, 1], [0, 2]],
+     [[0, 1, 2], [0, 1]],
+     [[0, 0, 0], [2, 2]],
+     [[0, 0, 0], [1, 3]],
+     [[0, 0, 1], [1, 2]],
+     [[0, 0, 2], [1, 1]],
      [[0, 0, 0], [0, 4]],
      [[0, 0, 1], [0, 3]],
      [[0, 0, 2], [0, 2]],
@@ -119,7 +123,7 @@ class ReversePlanePartitions(Tableaux):
      True
      sage: ([[0,0,-1],[0,1]]) in ReversePlanePartitions([3,2], 2)
      False
-     sage: ([[0,0,-1],[0,1]]) in ReversePlanePartitions([4,2], 2)
+     sage: ([[0,0,1],[0,1]]) in ReversePlanePartitions([4,2], 2)
      False
 
      sage: RPP = ReversePlanePartitions([5,1]);RPP.subset()
