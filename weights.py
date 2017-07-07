@@ -9,7 +9,7 @@ The index of (i, j, k) starts at (0, 0, 0).
 
 from sage.combinat.partition import Partition
 from sage.combinat.skew_tableau import SkewTableau
-from HG_stuff.Hillman_Grassl_Algorithm import Inverse_HG
+from reverse_plane_partition import ReversePlanePartitions
 
 def partition_weight(coefficients, powers, partition):
     """Calculate the weight of the partition."""
@@ -33,19 +33,6 @@ def partition_weight(coefficients, powers, partition):
                for i, j in partition_tab.cells()
                for k in range(partition_tab[i][j]))
 
-def ReversePlanePartitions(shape, n):
-    """Generate a list of all reverse plane partitions"""
-    shape_part = Partition(shape)
-    cells = shape_part.cells()
-    weights = [shape_part.hook_length(i, j) for i, j in cells]
-    for vec in WeightedIntegerVectors(n, weights):
-        hg = []
-        s = 0
-        for p in shape_part:
-            hg += [vec[s:(s+p)]]
-            s += p
-        yield Inverse_HG(hg)
-
 def SkewPlanePartitions(outer_shape, inner_shape, n):
     """ Generate a list of all skew plane partitions"""
     # The shape of the plane partitions to be generated
@@ -62,7 +49,6 @@ def funcToPlanePartition(func):
     shape = [len(row) for row in func]
     current = [row[-1] for row in func]
     
-
 def pt_weighted_sum(coefficients, powers, shape, prec, base = None):
     """Calculate the weighted sum over weight*q^size"""
     if base is None:
