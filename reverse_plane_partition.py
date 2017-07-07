@@ -134,6 +134,11 @@ class ReversePlanePartitions(Tableaux):
 
     TESTS::
 
+    sage: ReversePlanePartition([[0,0,-1],[0,1]])
+    Traceback (most recent call last):
+    ...
+    ValueError: [[0, 0, -1], [0, 1]] is not a reverse plane partition
+
     """
 
     Element = ReversePlanePartition
