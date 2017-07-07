@@ -28,16 +28,22 @@ class HillmanGrasslTableau(Tableau):
 
     EXAMPLES::
 
-        sage: t = HillmanGrasslTableau([[1,3,2],[2,1]]); t
+        sage: HG = HillmanGrasslTableau([[1,3,2],[2,1]]); HG
         [[1, 3, 2], [2, 1]]
-        sage: t.shape()
+        sage: HG.shape()
         [3, 2]
-        sage: t.pp() # pretty print
+        sage: HG.pp() # pretty print
         1 3 2
         2 1
 
         sage: HillmanGrasslTableau([]) # The empty tableau
         []
+
+        sage: HG = HillmanGrasslTableau([[1,2,0],[1,0,1],[1]])
+        sage: HG.to_ReversePlanePartition()
+        [[0, 1, 3], [2, 4, 4], [3]]
+        sage: HG.hg_size()
+        17
 
     TESTS::
 

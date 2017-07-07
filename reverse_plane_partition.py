@@ -11,6 +11,40 @@ from sage.categories.sets_with_grading import SetsWithGrading
 from hillman_grassl import Hillman_Grassl
 
 class ReversePlanePartition(Tableau):
+    r"""
+    A class to model Reverse Plane Partitions
+
+    INPUT:
+
+    - ``t`` -- a Tableau
+
+    OUTPUT:
+
+    - A ReversePlanePartition object constructed from ``t``.
+
+    description of ReversePlanePartition
+
+    EXAMPLES::
+
+        sage: RPP = ReversePlanePartition([[0,1,3],[2,4,4],[3]]); t
+        [[0, 1, 3], [2, 4, 4], [3]]
+        sage: RPP.shape()
+        [3, 3, 2]
+        sage: RPP.pp() # pretty print
+        0 1 3
+        2 4 4
+        3
+        sage: RPP.partition_size()
+        17
+        sage: RPP.to_HilmanGrasslTableau()
+        [[1, 2, 0], [1, 0, 1], [1]]
+
+        sage: ReversePlanePartition([]) # The empty tableau
+        []
+
+    TESTS::
+
+    """
     @staticmethod
     def __classcall_private__(cls, t):
         if isinstance(t, ReversePlanePartition):
@@ -34,6 +68,69 @@ class ReversePlanePartition(Tableau):
         return HillmanGrasslTableau(Hillman_Grassl(self))
 
 class ReversePlanePartitions(Tableaux):
+
+    r"""
+    A factory class for the various classes of Reverse Plane Partitions.
+
+    INPUT:
+
+    - ``shape`` -- the shape of the tableaux
+    - ``size`` -- the size of the tableaux
+
+    OUTPUT:
+
+    - The appropriate class, after checking basic consistency tests.
+
+    description of ReversePlanePartitions
+
+    EXAMPLES::
+
+    sage: RPP = ReversePlanePartitions([2,1]);RPP.cardinality()
+    +Infinity
+#Do these next
+    sage: RPP = ReversePlanePartitions([4,2], 2);RPP.cardinality()
+    5
+
+    sage: RPP = ReversePlanePartitions([4,3],3)
+    sage: RPP.random_element()   #random
+    [[0, 0, 0, 1], [1, 0, 1]]
+
+    sage: RPP = ReversePlanePartitions([5,2],4);RPP
+    Reverse Plane Partitions of shape [5, 2] and size 4
+
+    sage: RPP = ReversePlanePartitions([3,2],4);HG.list()
+    [[[1, 0, 0], [0, 0]],
+     [[0, 1, 0], [0, 1]],
+     [[0, 1, 1], [0, 0]],
+     [[0, 0, 0], [2, 0]],
+     [[0, 0, 0], [1, 2]],
+     [[0, 0, 1], [1, 1]],
+     [[0, 0, 2], [1, 0]],
+     [[0, 0, 0], [0, 4]],
+     [[0, 0, 1], [0, 3]],
+     [[0, 0, 2], [0, 2]],
+     [[0, 0, 3], [0, 1]],
+     [[0, 0, 4], [0, 0]]]
+
+     sage: ([[0,0,1],[0,1]]) in ReversePlanePartitions([3,2], 2)
+     True
+     sage: Tableau([[0,0,1],[0,1]]) in ReversePlanePartitions([3,2], 2)
+     True
+     sage: ([[0,0,-1],[0,1]]) in ReversePlanePartitions([3,2], 2)
+     False
+     sage: ([[0,0,-1],[0,1]]) in ReversePlanePartitions([4,2], 2)
+     False
+
+     sage: RPP = ReversePlanePartitions([5,1]);RPP.subset()
+     Reverse Plane Partitions of shape [5, 1]
+
+     sage: RPP = ReversePlanePartitions([5,1]);RPP.subset(2)
+     Reverse Plane Partitions of shape [5, 1] and size 2
+
+    TESTS::
+
+    """
+
     Element = ReversePlanePartition
 
     @staticmethod
