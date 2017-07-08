@@ -1,3 +1,5 @@
+# -*- mode: sage -*-
+
 from sage.combinat.tableau import Tableau, Tableaux
 from sage.combinat.partition import Partition, Partitions
 from sage.sets.disjoint_union_enumerated_sets import \
@@ -9,7 +11,7 @@ from sage.categories.infinite_enumerated_sets import \
 from sage.categories.finite_enumerated_sets import FiniteEnumeratedSets
 from sage.categories.sets_with_grading import SetsWithGrading
 from sage.structure.parent import Parent
-from hillman_grassl import Hillman_Grassl
+from .hillman_grassl import Hillman_Grassl
 
 class ReversePlanePartition(Tableau):
     @staticmethod
@@ -33,6 +35,15 @@ class ReversePlanePartition(Tableau):
     def to_HilmanGrasslTableau(self):
         from hillman_grassl_tableau import HillmanGrasslTableau
         return HillmanGrasslTableau(Hillman_Grassl(self))
+
+    def to_SkewPlanePartition(self):
+        from .skew_plane_partition import SkewPlanePartition
+        if not self:
+            return SkewPlanePartition([])
+        width = len(self[0])
+        return SkewPlanePartition([
+            [None] * (width - len(row)) + list(reversed(row))
+            for row in reversed(self)])
 
 class ReversePlanePartitions(Tableaux):
     Element = ReversePlanePartition
@@ -61,7 +72,7 @@ class ReversePlanePartitions_size(ReversePlanePartitions):
         return HillmanGrasslTableaux(self._shape, self._size)
 
     def __iter__(self):
-        return (hg.to_ReversePlanePartition()
+        return (self(hg.to_ReversePlanePartition())
                 for hg in self._hillman_grassl())
 
     def cardinality(self):
@@ -69,8 +80,7 @@ class ReversePlanePartitions_size(ReversePlanePartitions):
 
     def random_element(self):
         hg = self._hillman_grassl().random_element()
-        rpp = hg.to_ReversePlanePartition()
-        return self.element_class(self, rpp)
+        return self(hg.to_ReversePlanePartition())
 
     def __contains__(self, x):
         return (x in ReversePlanePartitions_all(self._shape) and

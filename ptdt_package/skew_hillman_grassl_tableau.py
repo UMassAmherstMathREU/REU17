@@ -1,5 +1,8 @@
 # -*- mode: sage -*-
 
+# This module might not be necessary...
+# Keep it around just in case
+
 from sage.combinat.skew_tableau import SkewTableau, SkewTableaux
 
 class SkewHillmanGrasslTableau(SkewTableau):
@@ -31,10 +34,21 @@ class SkewHillmanGrasslTableau(SkewTableau):
         return sum(self[i][j] * outer_hook(shape, i, j)
                    for i, j in self.cells())
 
-    def to_HillmanGrasslTableau(self):
+    def to_HillmanGrasslTableau(self, nrows=None, ncols=None):
+        if nrows is None:
+            nrows = len(self) + 1
+        if ncols is None:
+            ncols = (len(self[0]) + 1) if self else 1
+        if nrows < len(self):
+            raise ValueError("%s has more than %d rows" % (self, nrows))
+        if self and ncols < len(self[0]):
+            raise ValueError("%s has more than %d columns"
+                             % (self, nrows))
         return HillmanGrasslTableau(
-            [[x for x in reversed(row) if x is not None]
-             for row in reversed(self)])
+            [[0] * ncols for i in range(nrows - len(self))]
+            + [[0] * (ncols - len(row))
+               + [x for x in reversed(row) if x is not None]
+               for row in reversed(self)])
 
 def outer_hook(part, i, j):
     conj = part.conjugate()
@@ -56,14 +70,13 @@ class SkewHillmanGrasslTableaux(SkewTableaux):
         elif size not in NN:
             raise ValueError("Size must be a non-negative integer")
 
-        return SkewHillmanGrasslTableaux_size(shape_part, size) 
+        return SkewHillmanGrasslTableaux_size(shape_part, size)
 
 class SkewHillmanGrasslTableaux_size(SkewHillmanGrasslTableaux):
     def __init__(self, shape, size):
         self._shape = shape
         self._size = size
-        super(SkewHillmanGrasslTableaux_size, self).__init__(
-            category=FiniteEnumeratedSets())
+        Parent.__init__(category=FiniteEnumeratedSets())
 
     def _repr_(self):
         return ("Skew Hillman-Grassl tableaux of shape %s and size %s"
