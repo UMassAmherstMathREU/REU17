@@ -9,9 +9,9 @@ The index of (i, j, k) starts at (0, 0, 0).
 
 from sage.combinat.partition import Partition
 from sage.combinat.skew_tableau import SkewTableau
-from reverse_plane_partition import ReversePlanePartitions
+from ptdt_package import *
 
-def partition_weight(coefficients, powers, partition):
+def partition_weight(coefficients, powers, partition, invert=False):
     """Calculate the weight of the partition."""
     a, b, c = coefficients
     try:
@@ -27,24 +27,43 @@ def partition_weight(coefficients, powers, partition):
         return prod(partition_weight(coefficients, m, partition)
                     for m in powers_tuple)
 
-    partition_tab = SkewTableau(partition)
+    if not isinstance(partition, Tableau):
+        partition = SkewTableau(partition)
+
     # m is now the only power
-    return sum((a * i) ** m + (b * j) ** m + (c * k) ** m
-               for i, j in partition_tab.cells()
-               for k in range(partition_tab[i][j]))
+    if invert:
+        return sum((a * i) ** m + (b * j) ** m + (c * (-1-k)) ** m
+                   for i, j in partition.cells()
+                   for k in range(partition[i][j]))
+    else:
+        return sum((a * i) ** m + (b * j) ** m + (c * k) ** m
+                   for i, j in partition.cells()
+                   for k in range(partition[i][j]))
 
-def pt_weighted_sum(coefficients, powers, shape, prec, base = None):
-    """Calculate the weighted sum over weight*q^size"""
-    if base is None:
-        base = ZZ
-    R = PowerSeriesRing(base, 'q')
+def weighted_sum(coefficients, powers, shape, domain='pt', prec=6):
+    """Calculate the weighted sum over weight*q^size
+    EXAMPLES::
+        sage: R.<a,b,c> = ZZ[]
+        sage: Z1 = weighted_sum((a,b,c), [], [], domain='dt', prec=6)
+        sage: R.<q> = ZZ[[]]
+        sage: Z2 = prod(1 / (1 - q^k)^k for k in range(1, 6)) + O(q^6)
+        sage: Z1 == Z2
+        True
+        sage: weighted_sum((a,b,c), 1, [2, 1], prec=3)
+        (a + b - 2*c)*q + (3*a + 3*b - 8*c)*q^2 + O(q^3)
+    """
+    if domain == 'pt':
+        P = ReversePlanePartitions(shape)
+        invert = True
+    elif domain == 'dt':
+        P = SkewPlanePartitions(shape)
+        invert = False
+    else:
+        raise ValueError("Unknown domain (use pt or dt): %s" % domain)
+    base_ring = parent(sum(coefficients))
+    R = base_ring[['q']]
     q = R.gen()
-    return sum(
-        partition_weight(coefficients, powers, part) * q ** size
-        for size in range(prec)
-        for part in ReversePlanePartitions(shape, size)) + R([], prec)
-
-def pt_weighted_sum_abc(powers, shape, prec):
-    """Calculate the sum, but leave in symbols a, b, c"""
-    base = PolynomialRing(ZZ, 'a,b,c')
-    return pt_weighted_sum(base.gens(), powers, shape, prec, base)
+    return sum(partition_weight(coefficients, powers, part, invert)
+               * q ** size
+               for size in range(prec)
+               for part in P.graded_component(size)) + O(q ** prec)

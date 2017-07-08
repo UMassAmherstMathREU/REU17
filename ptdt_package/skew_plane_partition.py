@@ -58,8 +58,9 @@ class SkewPlanePartitions_size(SkewPlanePartitions):
 
     def _reverse_plane_partitions(self):
         from .reverse_plane_partition import ReversePlanePartitions
-        width = (self._shape[0] if self._shape else 0) + self._size
-        shape = ([width] * self._size +
+        extra = max(self._size, 1)
+        width = (self._shape[0] if self._shape else 0) + extra
+        shape = ([width] * extra +
                  [width - s for s in reversed(self._shape)])
         return ReversePlanePartitions(shape, self._size)
 
