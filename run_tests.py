@@ -5,13 +5,12 @@ Run doctests
 """
 
 from sage.doctest.control import DocTestDefaults, DocTestController
+import os
+import sys
 
 # Add any new files to this list
-files = [
-    'hillman_grassl_tableau.py',
-    'reverse_plane_partition.py'
-]
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
 DD = DocTestDefaults()
-DC = DocTestController(DD, files)
+DC = DocTestController(DD, ['ptdt_package'])
 DC.run()

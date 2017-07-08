@@ -1,5 +1,4 @@
 # -*- mode: sage -*-
-
 from sage.combinat.tableau import Tableau, Tableaux
 from sage.combinat.partition import Partition, Partitions
 from sage.combinat.integer_vector import IntegerVectors
@@ -30,11 +29,12 @@ class HillmanGrasslTableau(Tableau):
 
     EXAMPLES::
 
+        sage: from ptdt_package import *
         sage: t = HillmanGrasslTableau([[1,3,2],[2,1]]); t
         [[1, 3, 2], [2, 1]]
         sage: t.shape()
         [3, 2]
-        sage: t.pp() # pretty print
+        sage: t.pp() # pretty printe
         1 3 2
         2 1
 
@@ -89,6 +89,7 @@ class HillmanGrasslTableaux(Tableaux):
 
     EXAMPLES::
 
+    sage: from ptdt_package import *
     sage: HG = HillmanGrasslTableaux([2,1]);HG.cardinality()
     +Infinity
 
