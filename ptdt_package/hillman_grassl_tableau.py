@@ -1,5 +1,4 @@
 # -*- mode: sage -*-
-
 from sage.combinat.tableau import Tableau, Tableaux
 from sage.combinat.partition import Partition, Partitions
 from sage.combinat.integer_vector import IntegerVectors
@@ -31,11 +30,12 @@ class HillmanGrasslTableau(Tableau):
 
     EXAMPLES::
 
-        sage: HG = HillmanGrasslTableau([[1,3,2],[2,1]]); HG
+        sage: from ptdt_package import *
+        sage: hg = HillmanGrasslTableau([[1,3,2],[2,1]]); hg
         [[1, 3, 2], [2, 1]]
-        sage: HG.shape()
+        sage: hg.shape()
         [3, 2]
-        sage: HG.pp()
+        sage: hg.pp()
         1 3 2
         2 1
 
@@ -97,6 +97,7 @@ class HillmanGrasslTableaux(Tableaux):
 
     EXAMPLES::
 
+    sage: from ptdt_package import *
     sage: HG = HillmanGrasslTableaux([2,1]);HG.cardinality()
     +Infinity
 
@@ -209,7 +210,7 @@ class HillmanGrasslTableaux_all(HillmanGrasslTableaux,
     def __init__(self, shape):
         from functools import partial
         self._shape = shape
-        F = Family(NN, partial(HillmanGrasslTableaux, shape))
+        F = Family(NN, partial(HillmanGrasslTableaux_size, shape))
         cat = (SetsWithGrading(), InfiniteEnumeratedSets())
         DisjointUnionEnumeratedSets.__init__(self, F, facade=True,
                                              keepkey=False,
