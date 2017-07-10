@@ -30,24 +30,28 @@ class ReversePlanePartition(Tableau):
 
     EXAMPLES::
 
-        sage: from ptdt_package import *
-        sage: RPP = ReversePlanePartition([[0,1,3],[2,4,4],[3]]); RPP
-        [[0, 1, 3], [2, 4, 4], [3]]
-        sage: RPP.shape()
-        [3, 3, 1]
-        sage: RPP.pp()
-        0 1 3
-        2 4 4
-        3
-        sage: RPP.partition_size()
-        17
-        sage: RPP.to_HillmanGrasslTableau().pp()
-        1  2  0
-        1  0  1
-        1
+    sage: from ptdt_package import *
+    sage: RPP = ReversePlanePartition([[0,1,3],[2,4,4],[3]]); RPP
+    [[0, 1, 3], [2, 4, 4], [3]]
+    sage: RPP.shape()
+    [3, 3, 1]
+    sage: RPP.pp()
+    0 1 3
+    2 4 4
+    3
+    sage: RPP.partition_size()
+    17
+    sage: RPP.to_HillmanGrasslTableau().pp()
+    1  2  0
+    1  0  1
+    1
+    sage: RPP.to_SkewPlanePartition().pp()
+    .  .  3
+    4  4  2
+    3  1
 
-        sage: ReversePlanePartition([])
-        []
+    sage: ReversePlanePartition([])
+    []
 
     TESTS::
 
@@ -130,20 +134,20 @@ class ReversePlanePartitions(Tableaux):
      [[0, 0, 3], [0, 1]],
      [[0, 0, 4], [0, 0]]]
 
-     sage: ([[0,0,1],[0,1]]) in ReversePlanePartitions([3,2], 2)
-     True
-     sage: Tableau([[0,0,1],[0,1]]) in ReversePlanePartitions([3,2], 2)
-     True
-     sage: ([[0,0,-1],[0,1]]) in ReversePlanePartitions([3,2], 2)
-     False
-     sage: ([[0,0,1],[0,1]]) in ReversePlanePartitions([4,2], 2)
-     False
+    sage: ([[0,0,1],[0,1]]) in ReversePlanePartitions([3,2], 2)
+    True
+    sage: Tableau([[0,0,1],[0,1]]) in ReversePlanePartitions([3,2], 2)
+    True
+    sage: ([[0,0,-1],[0,1]]) in ReversePlanePartitions([3,2], 2)
+    False
+    sage: ([[0,0,1],[0,1]]) in ReversePlanePartitions([4,2], 2)
+    False
 
-     sage: RPP = ReversePlanePartitions([5,1]);RPP.subset()
-     Reverse Plane Partitions of shape [5, 1]
+    sage: RPP = ReversePlanePartitions([5,1]);RPP.subset()
+    Reverse Plane Partitions of shape [5, 1]
 
-     sage: RPP = ReversePlanePartitions([5,1]);RPP.subset(2)
-     Reverse Plane Partitions of shape [5, 1] and size 2
+    sage: RPP = ReversePlanePartitions([5,1]);RPP.subset(2)
+    Reverse Plane Partitions of shape [5, 1] and size 2
 
     TESTS::
 
