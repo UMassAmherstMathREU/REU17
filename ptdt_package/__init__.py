@@ -4,3 +4,5 @@ from .reverse_plane_partition import (ReversePlanePartition,
                                       ReversePlanePartitions)
 from .hillman_grassl_tableau import (HillmanGrasslTableau,
                                      HillmanGrasslTableaux)
+
+from .weights import weighted_sum

@@ -12,5 +12,5 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
 DD = DocTestDefaults()
-DC = DocTestController(DD, ['ptdt_package', 'weights.py'])
+DC = DocTestController(DD, ['ptdt_package'])
 DC.run()

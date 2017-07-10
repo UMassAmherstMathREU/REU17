@@ -9,7 +9,11 @@ The index of (i, j, k) starts at (0, 0, 0).
 
 from sage.combinat.partition import Partition
 from sage.combinat.skew_tableau import SkewTableau
-from ptdt_package import *
+from sage.structure.element import parent
+from sage.rings.all import ZZ, Integer, O
+from sage.misc.all import prod
+from .reverse_plane_partition import *
+from .skew_plane_partition import *
 
 def partition_weight(coefficients, powers, partition, invert=False):
     """Calculate the weight of the partition."""
@@ -43,6 +47,7 @@ def partition_weight(coefficients, powers, partition, invert=False):
 def weighted_sum(coefficients, powers, shape, domain='pt', prec=6):
     """Calculate the weighted sum over weight*q^size
     EXAMPLES::
+        sage: from ptdt_package import *
         sage: R.<a,b,c> = ZZ[]
         sage: Z1 = weighted_sum((a,b,c), [], [], domain='dt', prec=6)
         sage: R.<q> = ZZ[[]]

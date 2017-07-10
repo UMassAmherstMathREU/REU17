@@ -1,0 +1,127 @@
+\documentclass{amsart}
+\usepackage{listings}
+\newcommand{\dd}[1]{\frac{\mathrm{d}}{\mathrm{d}#1}}
+\newcommand{\PT}{\mathrm{PT}}
+\newcommand{\DT}{\mathrm{DT}}
+\newcommand{\PPT}[1]{\mathbb{P}^{#1}_{PT}}
+\newcommand{\PDT}[1]{\mathbb{P}^{#1}_{DT}}
+\newcommand{\NN}{\mathbb{N}}
+\title{Weights of Plane Partitions for $\vec{k} = 0^n$}
+\author{James Hagborg}
+\begin{document}
+\maketitle
+For fixed $a + b + c = 0$, and $m \in \NN$, define a function on plane
+partitions $\pi$ by
+\[
+  w_m(\pi) = \sum_{(i, j, k) \in \pi} (ai)^m + (bj)^m + (ck)^m
+\]
+In particular, note that for $m = 0$, $w_0(\pi) = 3|\pi|$.  This holds
+for skew or reverse plane partitions.  Next, for
+$\vec{k} = (k_1, \cdots, k_n)$, define
+\[
+  w_{\vec k}(\pi) = \prod_{i=1}^n w_{k_i}(\pi)
+\]
+If $k_1 = 0$, define $\vec k' = (k_2, k_3, \cdots, k_n)$, so that
+$w_{\vec k}(\pi) = 3|\pi|w_{\vec k'}(\pi)$.
+
+Define the following series
+\[
+  \PT_\lambda(\vec k,q) = \sum_{\pi\in\PPT\lambda} w_{\vec k}(\pi)q^{|\pi|}
+\]
+\[
+  \DT_\lambda(\vec k,q) = \sum_{\pi\in\PDT\lambda} w_{\vec k}(\pi)q^{|\pi|}
+\]
+Applying our observations about when $k_1 = 0$, we have
+\[
+  \PT_\lambda(\vec k, q)
+  = \sum_{\pi\in\PPT\lambda} 3|\pi|w_{\vec k'}(\pi)q^{|\pi|}
+  = 3q\dd{q} \PT_\lambda(\vec k', q)
+\]
+And similarly
+\[
+  \DT_\lambda(\vec k, q) = 3q\dd{q} \DT_\lambda(\vec k', q)
+\]
+Using this rule, we can generalize our formula for $\DT_\lambda$ to a
+formula for $\DT_\lambda(0^n)$, by repeatedly applying $3q\dd{q}$, and
+using the product rule:
+\begin{align*}
+  \DT_\lambda(q)
+  &= \DT_\emptyset(q)\PT_\lambda(q)
+\end{align*}
+\begin{align*}
+  \DT_\lambda(0, q)
+  &= \left(3q\dd{q}\DT_\emptyset(q)\right)\PT_\lambda(q) +
+    \DT_\emptyset(q)\left(3q\dd{q}\PT_\lambda(q)\right) \\
+  &= \DT_\emptyset(0, q)\PT_\lambda(q) +
+    \DT_\emptyset(q)\PT_\lambda(0, q)
+\end{align*}
+\[
+  \DT_\lambda(0^2, q) =
+  \DT_\emptyset(0^2, q)\PT_\lambda(q) +
+  2\DT_\emptyset(0, q)\PT_\lambda(0, q) +
+  \DT_\emptyset(q)PT_\lambda(0^2, q)
+\]
+And so on.  In general, we have
+\[
+  \DT_\lambda(0^n, q) =
+  \sum_{k = 0}^n \binom{n}{k}
+  \DT_\emptyset(0^k, q)\PT_\lambda(0^{n-k}, q)
+\]
+We have verified this identity in sage, using the following method:
+\begin{lstlisting}[language=python]
+def check_formula(n, shape, prec=6):
+    R.<a,b,c> = ZZ[]
+    DT1 = weighted_sum((a, b, c), [0] * n, shape, 'dt', prec)
+    DT2 = sum(k *
+              weighted_sum((a, b, c), [0] * i, [], 'dt', prec) *
+              weighted_sum((a, b, c), [0] * j, shape, 'pt', prec)
+              for (i, j), k in binomial_coefficients(n).items())
+    assert DT1 == DT2
+\end{lstlisting}
+
+This identity has a combinatorial proof that extends the proof of the
+identity
+\[
+  \DT_\lambda(q) = \DT_\emptyset(q)\PT_\lambda(q)
+\]
+One can think of the weight $w_{0^n}(\pi) = 3^n|\pi|^n$ as counting
+the number of ways to pick $s_1, \cdots, s_n \in D(\pi) \times
+\{x,y,z\}$.  That is, each $s_i$ is a block in the diagram of $\pi$,
+along with a choice of axis.  Thus, we can think of $\DT_\lambda(0^n,
+q)$ as counting the number of plane partitions with $n$ ``special
+points,'' and similarly for $\PT_\lambda(0^n, q)$.
+
+The bijection works as follows.  Start with a plane partition
+$\pi \in \PDT{\lambda}$, and
+$s_1, \cdots, s_n \in D(\pi) \times \{x, y, z\}$.  This corresponds to
+a pair of $\mu \in \PDT{\emptyset}$ and $\nu \in \PPT{\lambda}$, with
+$|\pi| = |\mu| + |\nu|$.  Thus, there exists a bijection between the
+cells of $D(\pi)$ and $D(\mu) \sqcup D(\nu)$, so we have some $s_1',
+\cdots s_n' \in D(\mu) \sqcup D(\nu)$.  In other words, we can extend
+our bijection to keep track of where the ``special points'' lie.
+
+For any given $k$, there are $\binom{n}{k}$ ways to have $k$ of the
+points land in $D(\mu)$ and the rest land in $D(\nu)$.  Thus,
+\[
+  \DT_\lambda(0^n, q) =
+  \sum_{k = 0}^n \binom{n}{k}
+  \DT_\emptyset(0^k, q)\PT_\lambda(0^{n-k}, q)
+\]
+
+In general, if $\vec k$ contains non-zero elements, this bijection no
+longer works.  However, we can split the weight function up as
+\[
+  w_{\vec k}(\pi) = \sum_{s_1, \cdots s_n \in S} \prod_{i=1}^n
+  W_{s_i}^{k_i}
+\]
+where $S = D(\pi) \times \{x, y, z\}$ and
+\[
+  W_{(i, j, k), d} = \begin{cases}
+    ai, &\quad d = x \\
+    bj, &\quad d = y \\
+    ck, &\quad d = z
+  \end{cases}
+\]
+It may be hard to reason about what this is counting, especially for
+when $k_i$ is odd and $a, b, c$ may be negative.
+\end{document}
