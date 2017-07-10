@@ -13,6 +13,42 @@ from sage.structure.parent import Parent
 
 class SkewPlanePartition(SkewTableau):
 
+    r"""
+    A class to model Skew Plane Partitions
+
+    INPUT:
+
+    - ``t`` -- a SkewTableau
+
+    OUTPUT:
+
+    - A SkewPlanePartition object constructed from ``t``.
+
+    A skew plane partition is a skew tableau whose entries are non-negative
+    integers which are weakly decreasing in rows and columns.
+    Has a bijection with skew plane partitions.
+
+
+    EXAMPLES::
+
+    sage: from ptdt_package import *
+    sage: SPP = SkewPlanePartition([[None, None, 2],[1,1,1],[0]]); SPP
+    [[None, None, 2], [1, 1, 1]]
+    sage: SPP.shape()
+    [3, 3] / [2]
+    sage: SPP.pp()
+    .  .  2
+    1  1  1
+    sage: SPP.partition_size()
+    5
+
+    sage: SkewPlanePartition([])
+    []
+
+    TESTS::
+
+    """
+
     @staticmethod
     def __classcall_private__(cls, t):
         if isinstance(t, SkewPlanePartition):
@@ -35,6 +71,75 @@ class SkewPlanePartition(SkewTableau):
         return sum(x for r in self for x in r if x is not None)
 
 class SkewPlanePartitions(SkewTableaux):
+
+    r"""
+    A factory class for the various classes of Skew Plane Partitions.
+
+    INPUT:
+
+    - ``shape`` -- the shape of the skew tableaux
+    - ``size`` -- the size of the skew tableaux
+
+    OUTPUT:
+
+    - The appropriate class, after checking basic consistency tests.
+
+    A skew plane partition is a skew tableau whose entries are non-negative
+    integers which are weakly decreasing in rows and columns.
+
+    EXAMPLES::
+
+    sage: from ptdt_package import *
+    sage: SPP = SkewPlanePartitions([2,1]);SPP.cardinality()
+    +Infinity
+
+    sage: SPP = SkewPlanePartitions([2,1], 1);SPP.cardinality()
+    3
+
+    sage: SPP = SkewPlanePartitions([3,2],1)
+    sage: SPP.random_element()   #random
+    [[None, None, None], [None, None], [1]]
+
+    sage: SPP = SkewPlanePartitions([5,2],4);SPP
+    Skew plane partitions with inner shape [5, 2] and size 4
+
+    sage: SPP = SkewPlanePartitions([2,1],1);SPP.list()
+    [[[None, None, 1], [None]],
+     [[None, None], [None, 1]],
+     [[None, None], [None], [1]]]
+
+
+    sage: ([[None, None, 2], [None, None]]) in SkewPlanePartitions([2,2], 2)
+    True
+    sage: Tableau([[None, None, 2], [None, None]]) in SkewPlanePartitions([2,2], 2)
+    True
+    sage: ([[None, None, -2], [None, None]]) in SkewPlanePartitions([2,2], 2)
+    False
+    sage: ([[None, None, 2], [None, None]]) in SkewPlanePartitions([3,2], 2)
+    False
+    sage: ([1,1]) in SkewPlanePartitions([2],2)
+    False
+
+    sage: SPP = SkewPlanePartitions([5,1]);SPP.subset()
+    Skew plane partitions with inner shape [5, 1]
+
+    sage: SPP = SkewPlanePartitions([5,1]);SPP.subset(2)
+    Skew plane partitions with inner shape [5, 1] and size 2
+
+    TESTS::
+
+    sage: SkewPlanePartition([[0,0,-1],[0,1]])
+    Traceback (most recent call last):
+    ...
+    ValueError: [[0, 0, -1], [0, 1]] is not an element of Skew plane partitions with inner shape []
+
+    sage: SkewPlanePartition([[None,1,1],[2,2]])
+    Traceback (most recent call last):
+    ...
+    ValueError: [[None, 1, 1], [2, 2]] is not an element of Skew plane partitions with inner shape [1]
+
+    """
+
     Element = SkewPlanePartition
 
     @staticmethod
