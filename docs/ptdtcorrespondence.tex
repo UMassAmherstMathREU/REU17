@@ -7,6 +7,7 @@
 \newcommand{\HG}[1]{\mathrm{HG}_{#1}}
 \newcommand{\hg}[1]{\mathrm{hg}_{#1}}
 \newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
@@ -361,4 +362,127 @@ inside some $C^j$, and any outer hook is the subsequence $01$.  Since
 each $C^j$ begins with 0's and ends with 1's, there must be exactly
 one more $01$ than $10$ in each.  Thus there are $p$ more outer hooks
 than inner hooks.
+
+\subsection{Generating Function Proof}
+I found this proof while I was trying to formalize by proof by
+induction for hook lengths.  It uses Lemma 7.21.1 in Stanley, which
+gets at a similar idea of finding hooks by starting with sequences $1,
+\cdots n$, and skipping numbers at each corner of the partition.
+\begin{lemma}
+  Let $\lambda = (\lambda_1, \cdots, \lambda_n)$ be a partition and
+  let $\mu_i = \lambda_i + n - i$.  Then
+  \[
+    \prod_{u \in \lambda} [h(u)] =
+    \frac{\prod_{1 \leq i \leq n} [\mu_i]!}{
+      \prod_{1\leq i<j\leq n} [\mu_j - \mu_i]}
+  \]
+  where $[k] = 1-q^k$ and $[k]! = [1][2]\cdots[k]$.
+\end{lemma}
+Using this notation, what we would like to state is
+\[
+  \prod_{u\notin\lambda} [h^*(u)] = \prod_{k\geq 1}[k]^k
+  \prod_{u\in\lambda} [h(u)]
+\]
+Define $\nu$ to be the $N\times N$ box with $\lambda$ removed from the
+lower-right corner, so $\nu_i = N - \lambda_{N-i+1}$.  (Using the
+convention that $\lambda_i = 0$ if $i > n$.)  Define $\rho$ in a way
+analagous to $\mu$, so that $\rho_i = N - \nu_i - i = 2N -
+\lambda_{N-i+1} - i$.  Thus
+\[
+  \prod_{u\in \nu} [h(u)] =
+  \frac{
+    \prod_{1\leq i\leq N} [\rho_i]!
+  }{
+    \prod_{1\leq i < j \leq N} [\rho_i - \rho_j]
+  }
+\]
+Decompose the product as
+\[
+  \left(
+    \frac{\displaystyle
+      \prod_{1\leq i\leq N-n}[\rho_i]!
+    }{\displaystyle
+      \prod_{1 \leq i < j \leq N-n}[\rho_i-\rho_j]
+    }
+  \right)\left(
+    \frac{\displaystyle
+      \prod_{N-n < i \leq N}[\rho_i]!
+    }{\displaystyle
+      \prod_{1 \leq i \leq N-n < j \leq N}[\rho_i-\rho_j]
+    }
+  \right)\left(
+    \frac{1}{\displaystyle\prod_{N-n<i<j\leq N}[\rho_i - \rho_j]}
+  \right)
+\]
+For $i \leq N - n$, $\rho_i = 2N - i$, so the first term becomes
+\[
+  \frac{\displaystyle
+    \prod_{1\leq i\leq N-n}[\rho_i]!
+  }{\displaystyle
+    \prod_{1 \leq i < j \leq N-n}[\rho_i-\rho_j]
+  } =
+  \frac{\displaystyle
+    \prod_{1\leq i\leq N-n}[2N - i]!
+  }{\displaystyle
+    \prod_{1 \leq i < j \leq N-n}[j-i]
+  } =
+  \frac{\displaystyle
+    \prod_{1\leq k < 2N}[k]^{\min(N-n, 2N-k)}
+  }{\displaystyle
+    \prod_{1 \leq k \leq N-n}[k]^{N-n-k}
+  }
+  = \prod_{1 \leq k \leq N-n} [k]^k + O(q^{N-n+1})
+\]
+Where the second equality comes from counting the factors in the
+factorial differently.  If we take the limit $N \to \infty$, this term
+becomes $\prod_{k \geq 1} [k]^k$.  For the second term, use the fact
+that when $i > N - n$, we have $\rho_i = 2N - \lambda_{N-i+1} - i$, or
+using the change of variables $k = N - i + 1$, $\rho_{N-k+1} = N -
+\lambda_k + k - 1 = N - n - 1 - \mu_k$.  Thus
+\begin{align*}
+  \frac{\displaystyle
+    \prod_{N-n < i \leq N}[\rho_i]!
+  }{\displaystyle
+    \prod_{1 \leq i \leq N-n < j \leq N}[\rho_i-\rho_j]
+  }
+  &= \frac{ \displaystyle
+    \prod_{1 \leq k \leq n} [N - n - 1 - \mu_k]!
+  }{\displaystyle
+    \prod_{\substack{1 \leq i \leq N-n \\ 1 \leq k \leq n}} [(2N-i) -
+    (N-n-1-\mu_k)]
+  } \\
+  &= \prod_{1\leq k \leq n} \frac{
+    [N-n-1-\mu_k]!
+  }{
+    [\mu_k+1][\mu_k+1]\cdots [\mu_k + N + n]
+    } \\
+  &= \prod_{1\leq k \leq n} \frac{[\mu_k]!}{[N-n-\mu_k]\cdots
+    [N+n+\mu_k]} \\
+  &= \prod_{1\leq k \leq n} [\mu_k]! + O(q^{N-n-\mu_1})
+\end{align*}
+Note that in the numerator, I use the substitution $k = N - i + 1$,
+but in the denominator I use $k = N - j + 1$, before merging the
+products.  Also, we must assume $N > n + \mu_1$, which is fine since
+$N$ can be arbitrarily large.  As $N \to \infty$, this term becomes
+$\prod_{1\leq k\leq n}[\mu_k]!$.
+
+For the last term, use the substitutions $k = N - i + 1$ and $l = N -
+j + 1$, so that
+\[
+  \frac{1}{\displaystyle\prod_{N-n<i<j\leq N}[\rho_i - \rho_j]} =
+  \frac{1}{\displaystyle\prod_{1\leq l<k\leq n}
+    [\mu_l - \mu_k]}
+\]
+
+Thus,
+\[
+  \prod_{u \notin \lambda} [h^*(u)] =
+  \lim_{N\to\infty} \prod_{u \in \nu} [h(u)] =
+  \Bigg(\prod_{k\geq 1}[k]^k\Bigg)\Bigg( \prod_{u \in \lambda} [h(u)]\Bigg)
+\]
+
+Originally, I was going to formalize my proof by induction by writing
+the terms that get added and removed to the generating function when a
+new block is added or removed.  This proof is similar in that the
+lemma in Stanley is proved using a similar trick.
 \end{document}
