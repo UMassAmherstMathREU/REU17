@@ -7,7 +7,7 @@ varnames = ['x%s_%s' % (ind1, ind2)
 
 known = {}
 
-R1 = Integers(3)
+R1 = QQ
 R2 = PolynomialRing(R1, varnames)
 gens = (R2(1), R2(-1), R2(0))
 shape = Partition([2, 1, 1])
