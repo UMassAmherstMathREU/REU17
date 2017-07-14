@@ -12,6 +12,7 @@
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}
 \newtheorem{example}{Example}
+\newcommand{\cir}[1]{\raisebox{.5pt}{\textcircled{\raisebox{-.9pt} {#1}}}}
 \begin{document}
 \section{Preliminaries and the Hillman-Grassl Algorithm}
 First, some basic notation:
@@ -513,7 +514,77 @@ and $d_i'$ are added.  By drawing boxes on the diagram, one can see
 that these are always equal.
 
 The case of 1's being added and removed around the added cell is
-handled seperately.  There are only a few cases to do by hand, and
+handled separately.  There are only a few cases to do by hand, and
 they all work out.  This also introduces some arbitrary choices into
 how to build the map.
+
+As an example, here is a PT/DT partition where the bold numbers represent PT, and the non-bold numbers represent DT.  Additionally, the circled number represents the location where a new element will be added to PT.
+\begin{figure}[h]
+	\[
+	\begin{tabular}{|c|c|c|c|c|c|}
+		\hline
+		$\mathbf{5}$&$\mathbf{3}$&$\mathbf{1}$&1&2&3\\
+		\hline
+		$\mathbf{3}$&$\mathbf{1}$&$\cir{1}$&3&4&5\\
+		\hline
+		$\mathbf{1}$&1&3&5&6&7\\
+		\hline
+		1&3&5&7&8&9\\
+		\hline
+		2&4&6&8&9&10\\
+		\hline
+	\end{tabular}
+	\rightarrow
+	\begin{tabular}{|c|c|c|c|c|c|}
+		\hline
+		$\mathbf{5}$&$\mathbf{3}$&$\mathbf{2}$&1&2&3\\
+		\hline
+		$\mathbf{4}$&$\mathbf{2}$&$\mathbf{1}$&2&3&4\\
+		\hline
+		$\mathbf{1}$&1&2&5&6&7\\
+		\hline
+		1&3&4&7&8&9\\
+		\hline
+		2&4&5&8&9&10\\
+		\hline
+	\end{tabular}
+	\]
+\end{figure}
+
+Firstly, you will notice that the only elements to change were those that were in the same row or column as the changed number.  These numbers have been circled below to demonstrate.
+
+\begin{figure}[h]
+	\[
+	\begin{tabular}{|c|c|c|c|c|c|}
+		\hline
+		$\mathbf{5}$&$\mathbf{3}$&$\cir{$\mathbf{1}$}$&1&2&3\\
+		\hline
+		$\cir{$\mathbf{3}$}$&$\cir{$\mathbf{1}$}$&$\cir{1}$&$\cir{3}$&$\cir{4}$&$\cir{5}$\\
+		\hline
+		$\mathbf{1}$&1&$\cir{3}$&5&6&7\\
+		\hline
+		1&3&$\cir{5}$&7&8&9\\
+		\hline
+		2&4&$\cir{6}$&8&9&10\\
+		\hline
+	\end{tabular}
+	\rightarrow
+	\begin{tabular}{|c|c|c|c|c|c|}
+		\hline
+		$\mathbf{5}$&$\mathbf{3}$&$\cir{\textbf{2}}$&1&2&3\\
+		\hline
+		$\cir{\textbf{4}}$&$\cir{\textbf{2}}$&$\cir{\textbf{1}}$&$\cir{2}$&$\cir{3}$&$\cir{4}$\\
+		\hline
+		$\mathbf{1}$&1&$\cir{2}$&5&6&7\\
+		\hline
+		1&3&$\cir{4}$&7&8&9\\
+		\hline
+		2&4&$\cir{5}$&8&9&10\\
+		\hline
+	\end{tabular}
+	\]
+\end{figure}
+
+Now, we examine the differences between the two circled sections.  The PT section started with (1,1,3), and ended with (1,2,2,4).  Meanwhile the DT section started with (1,3,3,4,5,5,6) and ended with (2,2,3,4,4,5).  Put another way, the PT side gained (2,2,4) and lost (1,3), while the DT side gained (2,2,4) and lost (1,3,5,6).  However if one looks beyond the scope of this graph (i.e. directly to the right of the circled row) then they may be certain that the next element there must be (5).  Therefore the DT side did not lose the 5, it was simply pushed right.  A similar methodology can be used to explain why the (6) was not lost, only pushed down the column.  So, in reality, the PT side gained (2,2,4) and lost (1,3) while the DT side also gained (2,2,4) and lost (1,3) thereby demonstrating that you can inductively add cells.
+
 \end{document}
