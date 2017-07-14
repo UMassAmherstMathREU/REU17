@@ -485,4 +485,35 @@ Originally, I was going to formalize my proof by induction by writing
 the terms that get added and removed to the generating function when a
 new block is added or removed.  This proof is similar in that the
 lemma in Stanley is proved using a similar trick.
+
+\subsection{Induction on Cells of $\lambda$}
+This proof is by induction on the cells of $\lambda$.  In other words,
+the bijection formed is dependant on a SYT of shape $\lambda$, to
+decide what order to add cells.  For $\lambda = \emptyset$, the
+bijection exists, since $\dt{\emptyset} = \dt{\emptyset}$.
+
+Notice that when one adds a cell to $\lambda$, the only hook lengths
+changed are the inner hooks directly above and to the left, and the
+outer hooks lengths directly below and to the right.  For the most
+part, the hooks are just shifted over by 1, with a finite number of
+exceptions.  I claim that these exceptions are exactly equal on the
+inside and on the outside.  More specifically, the hooks added and
+removed on the bottom equal the ones on the left, and similarly for
+the right and top.
+
+For the outer hooks on the bottom, let $a_1$ and $b_1$ be the first
+pair of non-consecutive hook lengths, corresponding to the first time
+$\lambda_i \neq \lambda_{i+1}$ below the added cell.  Let $c_1$ be
+start of the first consecutive sequence on the left, not counting the
+one starting from where the cell is added.  Let $d_1$ be end of this
+sequence.  Define $a_i, b_i, c_i, d_i$ in terms of the following
+sequences.  Define $a_i', b_i', c_i', d_i'$ to be the new hooks after
+adding the cell.  Note that $a_i$ and $c_i$ are removed, and $b_i'$
+and $d_i'$ are added.  By drawing boxes on the diagram, one can see
+that these are always equal.
+
+The case of 1's being added and removed around the added cell is
+handled seperately.  There are only a few cases to do by hand, and
+they all work out.  This also introduces some arbitrary choices into
+how to build the map.
 \end{document}
