@@ -12,7 +12,7 @@ R2 = PolynomialRing(R1, varnames)
 gens = (R2(1), R2(-1), R2(0))
 shape = Partition([2, 1, 1])
 empty = Partition([])
-prec = 10
+prec = 8
 
 @cached_method
 def PT(shape, k=()):
