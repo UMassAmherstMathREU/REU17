@@ -36,11 +36,11 @@ def partition_weight(coefficients, powers, partition, invert=False):
 
     # m is now the only power
     if invert:
-        return sum((a * i) ** m + (b * j) ** m + (c * (-1-k)) ** m
+        return sum((a * i + b * j + c * (-1-k)) ** m
                    for i, j in partition.cells()
                    for k in range(partition[i][j]))
     else:
-        return sum((a * i) ** m + (b * j) ** m + (c * k) ** m
+        return sum((a * i + b * j + c * k) ** m
                    for i, j in partition.cells()
                    for k in range(partition[i][j]))
 
