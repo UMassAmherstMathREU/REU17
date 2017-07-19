@@ -6,6 +6,25 @@ we did before, so be careful if loading this at the same time as another
 file.
 """
 
+def column_sum(value, i, j, m, coeffs, invert):
+    a, b, c = coeffs
+    if value is None:
+        # Infinite column of DT
+        T = a * i + b * j
+        return sum((-1)**len(s) * (T + sum(s))**m
+                   for s in powerset([a, b]))
+    elif not invert:
+        # Finite part of DT
+        T = lambda k: a * i + b * j + c * k
+        return sum((-1)**len(s) * (T(k) + sum(s))**m
+                   for k in range(value)
+                   for s in powerset([a, b, c]))
+    else:
+        # Infinite part of PT
+        T = a * i + b * j - (2 + value) * c
+        return -sum((-1)**len(s) * (T + sum(s)) ** m
+                    for s in powerset([a, b]))
+
 def chern_character(part, m, coeffs=None, invert=False):
     """ Compute a component of Chern character for a given partition
 
@@ -31,22 +50,16 @@ def chern_character(part, m, coeffs=None, invert=False):
         a, b = R.gens()
         coeffs = (a, b, -a-b)
     a, b, c = coeffs
-    if invert:
-        T = lambda i, j, k: a * i + b * j + c * (-1-k)
-    else:
-        T = lambda i, j, k: a * i + b * j + c * k
-    return -sum((-1) ** len(s) * (T(i, j, k) + sum(s)) ** m
+    return -sum(column_sum(val, i, j, m, coeffs, invert)
                 for i, row in enumerate(part)
-                for j, col in enumerate(row)
-                if col is not None
-                for k in range(col)
-                for s in powerset(coeffs)) / factorial(m)
-
+                for j, val in enumerate(row)) / factorial(m)
+    
 def chern_product(part, ks, coeffs=None, invert=False):
     if ks in ZZ:
         ks = (ks,)
     return prod(chern_character(part, k, coeffs, invert) for k in ks)
 
+@cached_method
 def new_weighted_sum(P, ks, invert=False, coeffs=None, prec=8):
     if coeffs is None:
         R = PolynomialRing(QQ, 'a,b')
@@ -55,7 +68,7 @@ def new_weighted_sum(P, ks, invert=False, coeffs=None, prec=8):
     
     R = parent(sum(coeffs))
     q = R[['q']].gen()
-    return sum(chern_product(pi, ks, coeffs) * (-q) ** size
+    return sum(chern_product(pi, ks, coeffs, invert) * (-q) ** size
                for size in range(prec)
                for pi in P.graded_component(size)) + O(q ** prec)
 
@@ -110,41 +123,129 @@ def check_formulas():
         -D/360 * (m([4]) + 2*m([3,1]) + 3*m([2,2]) + 5*m([2,1,1]))
         * E(7)(-q)), "DT7"
 
-inds = [0, 1, 2, 3]
-varnames = ['x%s_%s' % (ind1, ind2)
-            for ind1, _ in enumerate(inds)
-            for ind2, _ in enumerate(inds)]
-R1.<a,b> = QQ[]
-R2 = PolynomialRing(R1, varnames)
-gens = (R2(a),R2(b),R2(-a-b))
-shape = Partition([2, 1, 1])
-empty = Partition([])
+### Solve matrix stuff
 
-def get_var(i, j):
-    return R2('x%s_%s' % (i, j))
+def solve_matrix():
+    solve_for = 7
+    inds = [(), (2,), (2,2), (3,), (4,), (5,), (6,), (7,), (3,3), (3,4)]
+    varnames = ['x%s_%s' % (ind1, ind2)
+                for ind1, _ in enumerate(inds)
+                for ind2, _ in enumerate(inds)]
 
-def get_eq(shape):
-    shape = Partition(shape)
-    DT1 = DT(shape, 3, gens)
-    DT2 = sum(get_var(i, j) * DT(empty, ti, gens, 6) * PT(shape, tj, gens, 6)
-              for i, ti in enumerate(inds)
-              for j, tj in enumerate(inds))
-    return DT1 - DT2
+    known = {(i, j): 0
+             for i, ti in enumerate(inds)
+             for j, tj in enumerate(inds)
+             if sum(ti) + sum(tj) > solve_for}
+    
+    for i, ti in enumerate(inds):
+        known[1, i] = 0
+        known[2, i] = 0
+        known[4, i] = 0
 
-terms = [term
-         for shape in Partitions(3)
-         for term in get_eq(shape)]
+    R1.<a,b> = QQ[]
+    R2 = PolynomialRing(R1, varnames)
+    gens = (R2(a),R2(b),R2(-a-b))
+    empty = Partition([])
+    prec = 10
 
-unknowns = [get_var(i, j)
-            for i, ti in enumerate(inds)
-            for j, tj in enumerate(inds)]
+    def get_var(i, j):
+        if (i, j) in known:
+            return known[i, j]
+        return R2('x%s_%s' % (i, j))
 
-mat = matrix([[t[g] for g in unknowns]
-              for t in terms])
-vec = vector(-t.constant_coefficient() for t in terms)
+    def get_eq(shape):
+        print "Getting equations for {}".format(shape)
+        shape = Partition(shape)
+        DT1 = DT(shape, solve_for, gens)
+        DT2 = sum(get_var(i, j) *
+                  DT(empty, ti, gens, prec) *
+                  PT(shape, tj, gens, prec)
+                  for i, ti in enumerate(inds)
+                  for j, tj in enumerate(inds))
+        return DT1 - DT2
+    
+    terms = [term
+             for shape in [(), (1,), (2, 1)]
+             for term in get_eq(shape)]
 
-print "Equations: %s" % mat.nrows()
-print "Rank: %s" % mat.rank()
-print "Unknown: %s" % len(unknowns)
-print "Solving..."
-print mat.solve_right(vec)
+    unknowns = [get_var(i, j)
+                for i, ti in enumerate(inds)
+                for j, tj in enumerate(inds)
+                if (i, j) not in known]
+
+    mat = matrix([[t[g] for g in unknowns]
+                  for t in terms])
+    vec = vector(-t.constant_coefficient() for t in terms)
+
+    print "Equations: %s" % mat.nrows()
+    print "Rank: %s" % mat.rank()
+    print "Unknown: %s" % len(unknowns)
+    print "Solving..."
+    solution = mat.solve_right(vec)
+
+    for i, a in enumerate(solution):
+        if a != 0:
+            print "{}: {}".format(unknowns[i], a)
+
+    K = mat.change_ring(Frac(R1)).right_kernel()
+    print K
+
+### Check formulas
+def known_formulas(shape):
+    R1.<a,b> = QQ[]
+    R2.<q> = R1[[]]
+    assert DTn(shape) == PT(shape), "No insertions"
+    assert DTn(shape, 1) == 0, "DT(1)"
+    assert PT(shape, 1) == 0, "PT(1)"
+    assert DTn(shape, 2) == -PT(shape, 2), "DTn(2)"
+    assert DTn(shape, 3) == (-2 * c * PT(shape, 2)
+                             - PT(shape, 3)
+                             + DTn([], 3) * PT(shape)), "DTn(3)"
+    assert DTn(shape, 4) == (-2 * c^2 * PT(shape, 2)
+                             -2 * c * PT(shape, 3)
+                             -PT(shape, 4)), "DTn(4)"
+    assert DTn(shape, 5) == (-4/3 * c^3 * PT(shape, 2)
+                             -2 * c^2 * PT(shape, 3)
+                             -2 * c * PT(shape, 4)
+                             -PT(shape, 5)
+                             -DTn([], 3) * PT(shape, 2)
+                             +DTn([], 5) * PT(shape)), "DTn(5)"
+    assert DTn(shape, 6) == (-2/3 * c^4 * PT(shape, 2)
+                             -4/3 * c^3 * PT(shape, 3)
+                             -2 * c^2 * PT(shape, 4)
+                             -2 * c * PT(shape, 5)
+                             -PT(shape, 6)
+                             -2 * c * DTn([], 3) * PT(shape, 2)
+                             -DTn([], 3) * PT(shape, 3)
+                             +DTn([], 6) * PT(shape)), "DTn(6)"
+    assert DTn(shape, 7) == (
+        sum(-(2*c)^n/factorial(n) * PT(shape, 7-n) for n in range(7))
+        + DTn([], 7) * PT(shape)
+        #- DTn([], 6) * PT(shape, 1) # == 0
+        - DTn([], 5) * PT(shape, 2)
+        #- DTn([], 4) * PT(shape, 3) # == 0
+        - DTn([], 3) * PT(shape, 4)
+        #- DTn([], 2) * PT(shape, 5) # == 0
+        #- DTn([], 1) * PT(shape, 6) # == 0
+        #- 2 * c * DTn([], 5) * PT(shape, 1) # == 0
+        #- 2 * c * DTn([], 4) * PT(shape, 2) # == 0
+        - 2 * c * DTn([], 3) * PT(shape, 3)
+        #- 2 * c * DTn([], 2) * PT(shape, 4) # == 0
+        #- 2 * c * DTn([], 1) * PT(shape, 5) # == 0
+        #- 2 * c^2 * DTn([], 4) * PT(shape, 1) # == 0
+        - 2 * c^2 * DTn([], 3) * PT(shape, 2)
+        #- 2 * c^2 * DTn([], 2) * PT(shape, 3) # == 0
+        #- 2 * c^2 * DTn([], 1) * PT(shape, 4) # == 0
+        )
+    # Coefficients for PT are 2^n/n!
+    # Same in fact for DT
+    # I think we have a conjecture!
+
+# General case -- this is really cool!
+def check_pt_dt_formula(shape, n, prec=10):
+    assert DT(shape, n) == (
+        DT([], n) * PT(shape, prec=prec)
+        + sum(-(2*c)^(n-i-j)/factorial(n-i-j)
+              * DT([], i, prec=prec) * PT(shape, j, prec=prec)
+              for i in range(0, n+1)
+              for j in range(1, n-i+1)))
