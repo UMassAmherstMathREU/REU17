@@ -244,7 +244,7 @@ def known_formulas(shape):
 # General case -- this is really cool!
 def check_pt_dt_formula(shape, n, prec=10):
     assert DT(shape, n) == (
-        DT([], n) * PT(shape, prec=prec)
+        DT([], n, prec=prec) * PT(shape, prec=prec)
         + sum(-(2*c)^(n-i-j)/factorial(n-i-j)
               * DT([], i, prec=prec) * PT(shape, j, prec=prec)
               for i in range(0, n+1)
