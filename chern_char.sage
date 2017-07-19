@@ -60,6 +60,10 @@ def chern_product(part, ks, coeffs=None, invert=False):
     return prod(chern_character(part, k, coeffs, invert) for k in ks)
 
 @cached_method
+def all_pps(P, size):
+    return tuple(P.graded_component(size))
+
+@cached_method
 def new_weighted_sum(P, ks, invert=False, coeffs=None, prec=8):
     if coeffs is None:
         R = PolynomialRing(QQ, 'a,b')
@@ -70,7 +74,7 @@ def new_weighted_sum(P, ks, invert=False, coeffs=None, prec=8):
     q = R[['q']].gen()
     return sum(chern_product(pi, ks, coeffs, invert) * (-q) ** size
                for size in range(prec)
-               for pi in P.graded_component(size)) + O(q ** prec)
+               for pi in all_pps(P, size)) + O(q ** prec)
 
 def PT(shape, ks=(), coeffs=None, prec=8):
     return new_weighted_sum(ReversePlanePartitions(shape),
@@ -124,55 +128,66 @@ def check_formulas():
         * E(7)(-q)), "DT7"
 
 ### Solve matrix stuff
+@cached_method
+def ptdt_prod(shape, k1, k2, n, gens, prec):
+    a, b, c = gens
+    l = n - sum(k1) - sum(k2)
+    if l < 0:
+        return 0
+    coeff = (-1) ** len(k2) * (2 * c) ** l / factorial(l)
+    dt = DT([], k1, prec=prec).change_ring(c.parent())
+    pt = PT(shape, k2, prec=prec).change_ring(c.parent())
+    return coeff * dt * pt
 
-def solve_matrix():
-    solve_for = 7
-    inds = [(), (2,), (2,2), (3,), (4,), (5,), (6,), (7,), (3,3), (3,4)]
+def solve_matrix(solve_for, prec=8):
+    inds = [p for s in range(sum(solve_for)+1)
+            for p in Partitions(s, min_part=2,
+                                max_length=len(solve_for))]
+    indstr = ["".join(str(x) for x in ind) if ind else "0"
+              for ind in inds]
     varnames = ['x%s_%s' % (ind1, ind2)
-                for ind1, _ in enumerate(inds)
-                for ind2, _ in enumerate(inds)]
+                for ind1 in indstr
+                for ind2 in indstr]
 
     known = {(i, j): 0
              for i, ti in enumerate(inds)
              for j, tj in enumerate(inds)
-             if sum(ti) + sum(tj) > solve_for}
+             if sum(ti) + sum(tj) > sum(solve_for)}
     
     for i, ti in enumerate(inds):
-        known[1, i] = 0
-        known[2, i] = 0
-        known[4, i] = 0
+        for j, tj in enumerate(inds):
+            if DT([], ti) == 0 or PT([1,1], tj) == 0 or 2 in ti:
+                known[i, j] = 0
 
-    R1.<a,b> = QQ[]
-    R2 = PolynomialRing(R1, varnames)
+    R1 = PolynomialRing(QQ, varnames)
+    R2.<a,b> = R1[]
     gens = (R2(a),R2(b),R2(-a-b))
     empty = Partition([])
-    prec = 10
 
     def get_var(i, j):
         if (i, j) in known:
             return known[i, j]
-        return R2('x%s_%s' % (i, j))
+        return R1('x%s_%s' % (indstr[i], indstr[j]))
 
     def get_eq(shape):
         print "Getting equations for {}".format(shape)
         shape = Partition(shape)
-        DT1 = DT(shape, solve_for, gens)
+        DT1 = DT(shape, solve_for, gens, prec)
         DT2 = sum(get_var(i, j) *
-                  DT(empty, ti, gens, prec) *
-                  PT(shape, tj, gens, prec)
+                  ptdt_prod(shape, ti, tj, sum(solve_for), gens, prec)
                   for i, ti in enumerate(inds)
-                  for j, tj in enumerate(inds))
+                  for j, tj in enumerate(inds)
+                  if (i, j) not in known)
         return DT1 - DT2
-    
-    terms = [term
-             for shape in [(), (1,), (2, 1)]
-             for term in get_eq(shape)]
 
+    terms = [R1(t)
+             for shape in [(), (1,), (1, 1), (2, 1)]
+             for term in get_eq(shape)
+             for t, _ in term]
     unknowns = [get_var(i, j)
                 for i, ti in enumerate(inds)
                 for j, tj in enumerate(inds)
                 if (i, j) not in known]
-
     mat = matrix([[t[g] for g in unknowns]
                   for t in terms])
     vec = vector(-t.constant_coefficient() for t in terms)
@@ -182,13 +197,27 @@ def solve_matrix():
     print "Unknown: %s" % len(unknowns)
     print "Solving..."
     solution = mat.solve_right(vec)
+    if mat.rank() < len(unknowns):
+        raise ValueError("Rank is too low")
 
     for i, a in enumerate(solution):
         if a != 0:
             print "{}: {}".format(unknowns[i], a)
 
-    K = mat.change_ring(Frac(R1)).right_kernel()
-    print K
+    return {str(unk): a
+            for unk, a in zip(unknowns, solution)
+            if a != 0}
+
+def find_all():
+    # Find all formulas where the sum is under 10
+    parts_to_solve = [p for i in range(1,10)
+                      for p in Partitions(i, min_part=2)]
+    f = open("dt_formulas", "w")
+    for p in parts_to_solve:
+        print "Working on {}".format(p)
+        solution = solve_matrix(p)
+        f.write("DT({}) = {}\n".format(p, solution))
+    f.close()
 
 ### Check formulas
 def known_formulas(shape):
