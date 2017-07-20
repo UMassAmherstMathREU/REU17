@@ -139,10 +139,14 @@ def ptdt_prod(shape, k1, k2, n, gens, prec):
     pt = PT(shape, k2, prec=prec).change_ring(c.parent())
     return coeff * dt * pt
 
-def solve_matrix(solve_for, prec=8):
-    inds = [p for s in range(sum(solve_for)+1)
-            for p in Partitions(s, min_part=2,
-                                max_length=len(solve_for))]
+def solve_matrix(solve_for, use_all_inds=False, prec=8):
+    if use_all_inds:
+        inds = [p for s in range(sum(solve_for)+1)
+                for p in Partitions(s, min_part=2)]
+    else:
+        inds = [p for s in range(sum(solve_for)+1)
+                for p in Partitions(s, min_part=2,
+                                    max_length=len(solve_for))]
     indstr = ["".join(str(x) for x in ind) if ind else "0"
               for ind in inds]
     varnames = ['x%s_%s' % (ind1, ind2)
