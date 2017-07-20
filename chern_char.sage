@@ -210,7 +210,7 @@ def solve_matrix(solve_for, prec=8):
 
 def find_all():
     # Find all formulas where the sum is under 10
-    parts_to_solve = [p for i in range(1,10)
+    parts_to_solve = [p for i in range(1,20)
                       for p in Partitions(i, min_part=2)]
     f = open("dt_formulas", "w")
     for p in parts_to_solve:
