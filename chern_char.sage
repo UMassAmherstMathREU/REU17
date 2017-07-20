@@ -132,6 +132,7 @@ def check_formulas():
 def ptdt_prod(shape, k1, k2, n, gens, prec):
     a, b, c = gens
     l = n - sum(k1) - sum(k2)
+    k2 = tuple(k for k in k2 if k != 0)
     if l < 0:
         return 0
     coeff = (-1) ** len(k2) * (2 * c) ** l / factorial(l)
@@ -282,3 +283,19 @@ def check_pt_dt_formula(shape, n, prec=10):
               * DT([], i, prec=prec) * PT(shape, j, prec=prec)
               for i in range(0, n+1)
               for j in range(1, n-i+1)))
+
+def check_n_3_formula(shape, n, prec=10):
+    R.<a,b> = QQ[]
+    gens = (a,b,-a-b)
+    DTPT = lambda k1, k2: ptdt_prod(shape, k1, k2, n+3, gens, prec)
+    assert DT(shape, (n, 3)) == (
+        DTPT((n, 3), ())
+        + DTPT((n,), (3,)) + DTPT((n,), (2,))
+        + sum(DTPT((k,3), (n-k-l,))
+              for k in range(n)
+              for l in range(n-k))
+        + sum(binomial(m+l, l) * DTPT((k,), (n-k-l, 3-m))
+              for k in range(n)
+              for l in range(n-k)
+              for m in range(3))
+    )
