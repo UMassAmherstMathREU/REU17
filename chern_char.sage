@@ -21,9 +21,9 @@ def column_sum(value, i, j, m, coeffs, invert):
                    for s in powerset([a, b, c]))
     else:
         # Infinite part of PT
-        T = a * i + b * j - (2 + value) * c
-        return -sum((-1)**len(s) * (T + sum(s)) ** m
-                    for s in powerset([a, b]))
+        T = a * i + b * j - (value) * c
+        return sum((-1)**len(s) * (T + sum(s)) ** m
+                   for s in powerset([a, b]))
 
 def chern_character(part, m, coeffs=None, invert=False):
     """ Compute a component of Chern character for a given partition
@@ -128,26 +128,19 @@ def check_formulas():
         * E(7)(-q)), "DT7"
 
 ### Solve matrix stuff
-@cached_method
 def ptdt_prod(shape, k1, k2, n, gens, prec):
     a, b, c = gens
     l = n - sum(k1) - sum(k2)
     k2 = tuple(k for k in k2 if k != 0)
     if l < 0:
         return 0
-    coeff = (-1) ** len(k2) * (2 * c) ** l / factorial(l)
     dt = DT([], k1, prec=prec).change_ring(c.parent())
     pt = PT(shape, k2, prec=prec).change_ring(c.parent())
-    return coeff * dt * pt
+    return dt * pt
 
 def solve_matrix(solve_for, use_all_inds=False, prec=8):
-    if use_all_inds:
-        inds = [p for s in range(sum(solve_for)+1)
-                for p in Partitions(s, min_part=2)]
-    else:
-        inds = [p for s in range(sum(solve_for)+1)
-                for p in Partitions(s, min_part=2,
-                                    max_length=len(solve_for))]
+    inds = [p for s in range(sum(solve_for) + 1)
+            for p in Partitions(s, min_part=2)]
     indstr = ["".join(str(x) for x in ind) if ind else "0"
               for ind in inds]
     varnames = ['x%s_%s' % (ind1, ind2)
@@ -157,12 +150,18 @@ def solve_matrix(solve_for, use_all_inds=False, prec=8):
     known = {(i, j): 0
              for i, ti in enumerate(inds)
              for j, tj in enumerate(inds)
-             if sum(ti) + sum(tj) > sum(solve_for)}
-    
+             if sum(ti) + sum(tj) != sum(solve_for)}
+
+    print solve_for
+    print len(known)
     for i, ti in enumerate(inds):
         for j, tj in enumerate(inds):
-            if DT([], ti) == 0 or PT([1,1], tj) == 0 or 2 in ti:
+            if DT([], ti, prec=prec) == 0 or (PT([2,1], tj, prec=prec) == 0 and
+                                              PT([1,1], tj, prec=prec) == 0 and
+                                              PT([1], tj, prec=prec) == 0 and
+                                              PT([], tj, prec=prec) == 0):
                 known[i, j] = 0
+    print len(known)
 
     R1 = PolynomialRing(QQ, varnames)
     R2.<a,b> = R1[]
@@ -193,6 +192,8 @@ def solve_matrix(solve_for, use_all_inds=False, prec=8):
                 for i, ti in enumerate(inds)
                 for j, tj in enumerate(inds)
                 if (i, j) not in known]
+    print len(known)
+    print len(inds)
     mat = matrix([[t[g] for g in unknowns]
                   for t in terms])
     vec = vector(-t.constant_coefficient() for t in terms)
@@ -227,50 +228,21 @@ def find_all():
 ### Check formulas
 def known_formulas(shape):
     R1.<a,b> = QQ[]
+    c = -a-b
     R2.<q> = R1[[]]
     assert DTn(shape) == PT(shape), "No insertions"
     assert DTn(shape, 1) == 0, "DT(1)"
     assert PT(shape, 1) == 0, "PT(1)"
     assert DTn(shape, 2) == -PT(shape, 2), "DTn(2)"
-    assert DTn(shape, 3) == (-2 * c * PT(shape, 2)
-                             - PT(shape, 3)
+    assert DTn(shape, 3) == (-PT(shape, 3)
                              + DTn([], 3) * PT(shape)), "DTn(3)"
-    assert DTn(shape, 4) == (-2 * c^2 * PT(shape, 2)
-                             -2 * c * PT(shape, 3)
-                             -PT(shape, 4)), "DTn(4)"
-    assert DTn(shape, 5) == (-4/3 * c^3 * PT(shape, 2)
-                             -2 * c^2 * PT(shape, 3)
-                             -2 * c * PT(shape, 4)
-                             -PT(shape, 5)
+    assert DTn(shape, 4) == -PT(shape, 4), "DTn(4)"
+    assert DTn(shape, 5) == (-PT(shape, 5)
                              -DTn([], 3) * PT(shape, 2)
                              +DTn([], 5) * PT(shape)), "DTn(5)"
-    assert DTn(shape, 6) == (-2/3 * c^4 * PT(shape, 2)
-                             -4/3 * c^3 * PT(shape, 3)
-                             -2 * c^2 * PT(shape, 4)
-                             -2 * c * PT(shape, 5)
-                             -PT(shape, 6)
-                             -2 * c * DTn([], 3) * PT(shape, 2)
+    assert DTn(shape, 6) == (-PT(shape, 6)
                              -DTn([], 3) * PT(shape, 3)
                              +DTn([], 6) * PT(shape)), "DTn(6)"
-    assert DTn(shape, 7) == (
-        sum(-(2*c)^n/factorial(n) * PT(shape, 7-n) for n in range(7))
-        + DTn([], 7) * PT(shape)
-        #- DTn([], 6) * PT(shape, 1) # == 0
-        - DTn([], 5) * PT(shape, 2)
-        #- DTn([], 4) * PT(shape, 3) # == 0
-        - DTn([], 3) * PT(shape, 4)
-        #- DTn([], 2) * PT(shape, 5) # == 0
-        #- DTn([], 1) * PT(shape, 6) # == 0
-        #- 2 * c * DTn([], 5) * PT(shape, 1) # == 0
-        #- 2 * c * DTn([], 4) * PT(shape, 2) # == 0
-        - 2 * c * DTn([], 3) * PT(shape, 3)
-        #- 2 * c * DTn([], 2) * PT(shape, 4) # == 0
-        #- 2 * c * DTn([], 1) * PT(shape, 5) # == 0
-        #- 2 * c^2 * DTn([], 4) * PT(shape, 1) # == 0
-        - 2 * c^2 * DTn([], 3) * PT(shape, 2)
-        #- 2 * c^2 * DTn([], 2) * PT(shape, 3) # == 0
-        #- 2 * c^2 * DTn([], 1) * PT(shape, 4) # == 0
-        )
     # Coefficients for PT are 2^n/n!
     # Same in fact for DT
     # I think we have a conjecture!
@@ -278,24 +250,26 @@ def known_formulas(shape):
 # General case -- this is really cool!
 def check_pt_dt_formula(shape, n, prec=10):
     assert DT(shape, n) == (
-        DT([], n, prec=prec) * PT(shape, prec=prec)
-        + sum(-(2*c)^(n-i-j)/factorial(n-i-j)
-              * DT([], i, prec=prec) * PT(shape, j, prec=prec)
-              for i in range(0, n+1)
-              for j in range(1, n-i+1)))
+        sum(DT([], k, prec=prec) * PT(shape, n-k, prec=prec)
+            for k in range(n+1)))
 
 def check_n_3_formula(shape, n, prec=10):
     R.<a,b> = QQ[]
     gens = (a,b,-a-b)
     DTPT = lambda k1, k2: ptdt_prod(shape, k1, k2, n+3, gens, prec)
-    assert DT(shape, (n, 3)) == (
-        DTPT((n, 3), ())
-        + DTPT((n,), (3,)) + DTPT((n,), (2,))
-        + sum(DTPT((k,3), (n-k-l,))
-              for k in range(n)
-              for l in range(n-k))
-        + sum(binomial(m+l, l) * DTPT((k,), (n-k-l, 3-m))
-              for k in range(n)
-              for l in range(n-k)
-              for m in range(3))
-    )
+    assert DT(shape, (n, 3)) == sum(DTPT((k,3), (n-k,)) + DTPT((k,), (n-k,3))
+                                    for k in range(n+1))
+
+def check_z_series(shape):
+    qprec = 12
+    zprec = 12
+    R1.<a,b> = QQ[]
+    R2.<q, z1, z2> = R1[[]]
+    DT0 = sum(DT([], (k1, k2), prec=qprec) * z1^k1 * z2^k2
+              for k1 in range(zprec) for k2 in range(zprec)) + O(z1^zprec + z2^zprec)
+    DTl = sum(DT(shape, (k1, k2), prec=qprec) * z1^k1 * z2^k2
+              for k1 in range(zprec) for k2 in range(zprec)) + O(z1^zprec + z2^zprec)
+    PTl = sum(PT(shape, (k1, k2), prec=qprec) * z1^k1 * z2^k2
+              for k1 in range(zprec) for k2 in range(zprec)) + O(z1^zprec + z2^zprec)
+    print PTl
+    print DTl - PTl * DT0
