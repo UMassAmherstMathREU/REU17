@@ -98,13 +98,16 @@ def check_all_0():
         print "Checking k={}, lambda={}".format(ks, part)
         assert PT(part, ks, (1, -1, 0)) == 0
 
-def odd_eisenstein(n, prec=8):
+def odd_eisenstein(n, k=0, prec=8):
     if n < 0 or n % 2 == 0:
         raise ValueError("{} is not positive and odd".format(n))
     q = QQ[['q']].gen()
-    return sum(d ** (n-1) * q ** i
-               for i in range(1, prec)
-               for d in divisors(i)) + O(q**prec)
+    E =  sum(d ** (n-1) * q ** i
+             for i in range(1, prec)
+             for d in divisors(i)) + O(q**prec)
+    for i in range(k):
+        E = q * E.derivative()
+    return E
 
 def check_formulas():
     # make sure we work in the right ring
@@ -128,6 +131,7 @@ def check_formulas():
         * E(7)(-q)), "DT7"
 
 ### Solve matrix stuff
+@cached_method
 def ptdt_prod(shape, k1, k2, n, gens, prec):
     a, b, c = gens
     l = n - sum(k1) - sum(k2)
@@ -138,7 +142,7 @@ def ptdt_prod(shape, k1, k2, n, gens, prec):
     pt = PT(shape, k2, prec=prec).change_ring(c.parent())
     return dt * pt
 
-def solve_matrix(solve_for, use_all_inds=False, prec=8):
+def solve_matrix(solve_for, use_all_inds=False, remainder=False, prec=8):
     inds = [p for s in range(sum(solve_for) + 1)
             for p in Partitions(s, min_part=2)]
     indstr = ["".join(str(x) for x in ind) if ind else "0"
@@ -177,6 +181,11 @@ def solve_matrix(solve_for, use_all_inds=False, prec=8):
         print "Getting equations for {}".format(shape)
         shape = Partition(shape)
         DT1 = DT(shape, solve_for, gens, prec)
+        if remainder:
+            n1, n2 = solve_for
+            DT1 -= sum(ptdt_prod(shape, (k1, k2), (n1-k1, n2-k2), n1+n2, gens, prec)
+                       for k1 in range(n1+1)
+                       for k2 in range(n2+1))
         DT2 = sum(get_var(i, j) *
                   ptdt_prod(shape, ti, tj, sum(solve_for), gens, prec)
                   for i, ti in enumerate(inds)
@@ -273,3 +282,58 @@ def check_z_series(shape):
               for k1 in range(zprec) for k2 in range(zprec)) + O(z1^zprec + z2^zprec)
     print PTl
     print DTl - PTl * DT0
+
+def get_remainder(shape, n1, n2, gens, prec=10):
+    expected = sum(DT([], (k1, k2), gens, prec=prec) * PT(shape, (n1-k1, n2-k2), gens, prec=prec)
+                   for k1 in range(n1 + 1) for k2 in range(n2 + 1))
+    actual = DT(shape, (n1, n2), gens, prec=prec)
+    remainder = expected - actual
+    a,b,c = gens
+    D = (a+b)*(a+c)*(b+c)
+    return remainder / D^2
+
+def solve_remainder(n1, n2, prec=10):
+    shapes = [(1,), (1,1), (2,1), (2,1,1)]
+    oe_params = [(2*n+1, k) for n in range(3) for k in range(3)]
+    pt_params = [(n,) for n in range(3) if n != 1]
+    params = [(oe, pt) for oe in oe_params for pt in pt_params]
+    var_names = ["x%s_%s_%s" % (oe[0], oe[1], pt[0])
+                 for oe, pt in params]
+    V = PolynomialRing(QQ, var_names)
+    R.<a,b> = V[]
+    P.<q> = R[[]]
+    gens = (a, b, -a-b)
+    print "Computing remainders"
+    remainders = [get_remainder(shape, n1, n2, gens, prec) for shape in shapes]
+
+    
+    print remainders
+    remainders = [r.change_ring(R) for r in remainders]
+    var_syms = [V(name) for name in var_names]
+    print "Computing sum"
+    sums = [sum(P(v)
+                * P(odd_eisenstein(oe[0], oe[1], prec=prec))
+                * P(PT(shape, pt, prec=prec))
+                for v, (oe, pt) in zip(var_syms, params))
+            for shape in shapes]
+    print "Computing difference"
+    differences = [r - s for r, s in zip(remainders, sums)]
+    print R(differences[0][0]).parent()
+    for d in differences:
+        for s in d:
+            print s
+            print s.parent()
+            R(s)
+    terms = [t for d in differences for s in d for t, _ in R(s)]
+    print terms
+    print "Building matrix"
+    mat = matrix([[t[g] for g in var_syms]
+                  for t in terms])
+    vec = vector([-t.constant_coefficient() for t in terms])
+    print 
+    print "rank", mat.rank()
+    print "unknowns", len(var_syms)
+    print "Solving"
+    solution = mat.solve_right(vec)
+    return {name: value for name, value in zip(var_names, solution)}
+    
