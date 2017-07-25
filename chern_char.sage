@@ -284,48 +284,51 @@ def check_z_series(shape):
     print DTl - PTl * DT0
 
 def get_remainder(shape, n1, n2, gens, prec=10):
-    expected = sum(DT([], (k1, k2), gens, prec=prec) * PT(shape, (n1-k1, n2-k2), gens, prec=prec)
+    expected = sum(DT([], (k1, k2), prec=prec) * PT(shape, (n1-k1, n2-k2), prec=prec)
                    for k1 in range(n1 + 1) for k2 in range(n2 + 1))
-    actual = DT(shape, (n1, n2), gens, prec=prec)
-    remainder = expected - actual
+    actual = DT(shape, (n1, n2), prec=prec)
+    remainder = actual - expected
     a,b,c = gens
     D = (a+b)*(a+c)*(b+c)
-    return remainder / D^2
+    return remainder
 
 def solve_remainder(n1, n2, prec=10):
-    shapes = [(1,), (1,1), (2,1), (2,1,1)]
-    oe_params = [(2*n+1, k) for n in range(3) for k in range(3)]
-    pt_params = [(n,) for n in range(3) if n != 1]
-    params = [(oe, pt) for oe in oe_params for pt in pt_params]
-    var_names = ["x%s_%s_%s" % (oe[0], oe[1], pt[0])
-                 for oe, pt in params]
+    shapes = [(), (1,), (1,1), (2,1), (2,1,1), (2,2)]
+    dt_params = [p for s in range(n1 + n2 + 1)
+                 for p in Partitions(s, min_part=3)
+                 if 4 not in p or len(p) > 1 and p[1] != 3
+                 if p != [8] and p != [10]]
+    pt_params = [p for s in range(n1 + n2 + 1)
+                 for p in Partitions(s, min_part=2, max_length=1)]
+    params = [(p, dt, pt) for dt in dt_params for pt in pt_params
+              if sum(dt) + sum(pt) <= n1 + n2
+              for p in Partitions(n1+n2 - sum(dt) - sum(pt),
+                                  max_length=1)
+              if p != [1]]
+    tup2str = lambda t: "_".join(str(i) for i in t)
+    var_names = ["x%s__%s__%s" % (tup2str(p), tup2str(dt), tup2str(pt))
+                 for p, dt, pt in params]
     V = PolynomialRing(QQ, var_names)
     R.<a,b> = V[]
     P.<q> = R[[]]
-    gens = (a, b, -a-b)
+    c = -a-b
+    gens = (a, b, c)
+    
     print "Computing remainders"
     remainders = [get_remainder(shape, n1, n2, gens, prec) for shape in shapes]
-
     
     print remainders
-    remainders = [r.change_ring(R) for r in remainders]
     var_syms = [V(name) for name in var_names]
     print "Computing sum"
-    sums = [sum(P(v)
-                * P(odd_eisenstein(oe[0], oe[1], prec=prec))
-                * P(PT(shape, pt, prec=prec))
-                for v, (oe, pt) in zip(var_syms, params))
+    m = SymmetricFunctions(QQ).monomial()
+    sums = [sum(P(v) * m(p).expand(3)(a, b, c)
+                * DT([], dt, prec=prec)
+                * PT(shape, pt, prec=prec)
+                for v, (p, dt, pt) in zip(var_syms, params))
             for shape in shapes]
     print "Computing difference"
     differences = [r - s for r, s in zip(remainders, sums)]
-    print R(differences[0][0]).parent()
-    for d in differences:
-        for s in d:
-            print s
-            print s.parent()
-            R(s)
     terms = [t for d in differences for s in d for t, _ in R(s)]
-    print terms
     print "Building matrix"
     mat = matrix([[t[g] for g in var_syms]
                   for t in terms])
@@ -334,6 +337,42 @@ def solve_remainder(n1, n2, prec=10):
     print "rank", mat.rank()
     print "unknowns", len(var_syms)
     print "Solving"
-    solution = mat.solve_right(vec)
-    return {name: value for name, value in zip(var_names, solution)}
+    if mat.rank() != len(var_syms):
+        for i, v in zip(mat.right_kernel().matrix()[0], var_names):
+            print v, i
     
+    solution = mat.solve_right(vec)
+    return {name: value for name, value in zip(var_names, solution)
+            if value != 0}
+    
+def find_dt_relations(n, prec):
+    params = [([n-s], dt)
+              for s in range(n+1)
+              if n - s != 1
+              for dt in Partitions(s, min_part=3)
+              if 4 not in dt or len(dt) > 1 and dt[1] != 3]
+    m = SymmetricFunctions(QQ).monomial()
+    tup2str = lambda t: "_".join(str(i) for i in t)
+    var_names = ["x%s__%s" % (tup2str(p), tup2str(dt))
+                 for p, dt in params]
+    V = PolynomialRing(QQ, var_names)
+    R.<a,b> = V[]
+    P.<q> = R[[]]
+    c = -a-b
+    var_syms = [V(name) for name in var_names]
+    m = SymmetricFunctions(QQ).monomial()
+    print "Building equations"
+    s = sum(P(v) * m(p).expand(3)(a, b, c) * DT([], dt, prec=prec)
+            for v, (p, dt) in zip(var_syms, params))
+    terms = [t for qterm in s for t, _ in qterm]
+    mat = matrix([[t[g] for g in var_syms]
+                  for t in terms])
+    print "Finding kernel"
+    K = mat.right_kernel()
+    for row in K.matrix():
+        print
+        print "Found relation:"
+        for (p, dt), value in zip(params, row):
+            if value != 0:
+                print "{} * m_{} * DT_0({})".format(value, p[0], dt)
+        print "sums to 0"
