@@ -292,12 +292,14 @@ def get_remainder(shape, n1, n2, gens, prec=10):
     D = (a+b)*(a+c)*(b+c)
     return remainder
 
-def solve_remainder(n1, n2, prec=10):
+def solve_remainder(n1, n2, prec=10, exclude=None):
+    if exclude is None:
+        exclude = []
     shapes = [(), (1,), (1,1), (2,1), (2,1,1), (2,2)]
     dt_params = [p for s in range(n1 + n2 + 1)
                  for p in Partitions(s, min_part=3)
                  if 4 not in p or len(p) > 1 and p[1] != 3
-                 if p != [8] and p != [10]]
+                 if p not in exclude]
     pt_params = [p for s in range(n1 + n2 + 1)
                  for p in Partitions(s, min_part=2, max_length=1)]
     params = [(p, dt, pt) for dt in dt_params for pt in pt_params
