@@ -376,3 +376,23 @@ def find_dt_relations(n, prec):
             if value != 0:
                 print "{} * m_{} * DT_0({})".format(value, p[0], dt)
         print "sums to 0"
+
+def find_4_relation(n, prec):
+    V.<x,y,z,w> = QQ[]
+    R.<a,b> = V[]
+    c = -a-b
+    gens = (a, b, c)
+    m2 = a^2 + b^2 + c^2
+    s1 = m2 * sum(DT([], (k, n-k), gens, prec) * (-1)^k
+                  for k in range(n+1))
+    s2 = sum(DT([], (k, n-k+2), gens, prec) * (-1)^k
+             for k in range(n+3))
+    d1 = m2 * DT([], (4, n-4), gens, prec)
+    d2 = DT([], (4, n-2), gens, prec)
+    d3 = (a^4 + b^4 + c^4) * DT([], (4, n-6), gens, prec)
+    eq = s1 + x * s2 + y * d1 + z * d2 + w * d3
+    terms = [t for qterm in eq for t, _ in qterm]
+    mat = matrix([[t[x], t[y], t[z], t[w]] for t in terms])
+    vec = vector([-t.constant_coefficient() for t in terms])
+    print mat.rank()
+    print mat.solve_right(vec)
