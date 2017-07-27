@@ -53,7 +53,7 @@ def chern_character(part, m, coeffs=None, invert=False):
     return -sum(column_sum(val, i, j, m, coeffs, invert)
                 for i, row in enumerate(part)
                 for j, val in enumerate(row)) / factorial(m)
-    
+
 def chern_product(part, ks, coeffs=None, invert=False):
     if ks in ZZ:
         ks = (ks,)
@@ -69,7 +69,7 @@ def new_weighted_sum(P, ks, invert=False, coeffs=None, prec=8):
         R = PolynomialRing(QQ, 'a,b')
         a, b = R.gens()
         coeffs = (a, b, -a-b)
-    
+
     R = parent(sum(coeffs))
     q = R[['q']].gen()
     return sum(chern_product(pi, ks, coeffs, invert) * (-q) ** size
@@ -117,11 +117,11 @@ def check_formulas():
     q = PS.gen()
     c = -a-b
     D = (a + b) * (a + c) * (b + c)
-    
+
     E = lambda n: PS(odd_eisenstein(n))
     monomial = SymmetricFunctions(QQ).monomial()
     m = lambda p: monomial(p).expand(3)(a,b,c)
-    
+
     assert DTn([], 3) == -D * E(3)(-q), "DT3"
     assert DTn([], 4) == 0, "DT4"
     assert DTn([], 5) == -D/12 * (m([2]) + m([1,1])) * E(5)(-q), "DT5"
@@ -301,7 +301,7 @@ def solve_remainder(n1, n2, prec=10, exclude=None):
                  if 4 not in p or len(p) > 1 and p[1] != 3
                  if p not in exclude]
     pt_params = [p for s in range(n1 + n2 + 1)
-                 for p in Partitions(s, min_part=2, max_length=1)]
+                 for p in Partitions(s, min_part=2)]
     params = [(p, dt, pt) for dt in dt_params for pt in pt_params
               if sum(dt) + sum(pt) <= n1 + n2
               for p in Partitions(n1+n2 - sum(dt) - sum(pt),
@@ -315,10 +315,10 @@ def solve_remainder(n1, n2, prec=10, exclude=None):
     P.<q> = R[[]]
     c = -a-b
     gens = (a, b, c)
-    
+
     print "Computing remainders"
     remainders = [get_remainder(shape, n1, n2, gens, prec) for shape in shapes]
-    
+
     print remainders
     var_syms = [V(name) for name in var_names]
     print "Computing sum"
@@ -335,18 +335,18 @@ def solve_remainder(n1, n2, prec=10, exclude=None):
     mat = matrix([[t[g] for g in var_syms]
                   for t in terms])
     vec = vector([-t.constant_coefficient() for t in terms])
-    print 
+    print
     print "rank", mat.rank()
     print "unknowns", len(var_syms)
     print "Solving"
     if mat.rank() != len(var_syms):
         for i, v in zip(mat.right_kernel().matrix()[0], var_names):
             print v, i
-    
+
     solution = mat.solve_right(vec)
     return {name: value for name, value in zip(var_names, solution)
             if value != 0}
-    
+
 def find_dt_relations(n, prec):
     params = [([n-s], dt)
               for s in range(n+1)
