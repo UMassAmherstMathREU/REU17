@@ -422,14 +422,16 @@ def check_4_formula(shape, n, prec, gens=None):
          m([6]) * OE(9,1) / 40320
          + m([2,2,2]) * (OE(3,1) * OE(3,0)^2 - OE(9,1) / 8640) / 2,
          0,0,0]
-    remainder = sum(k * PT(shape, k, gens, prec=prec) * F[n-2-k]
+    remainder = sum(-k * PT(shape, k, gens, prec=prec) *
+                    q * DTn([], n - k + 1, gens, prec=prec).derivative()
+                    / D
                     for k in range(n-1))
     print (actual - nice_part) / m([2,2,2])
     print
     print remainder
     print
     return (actual - nice_part) / m([2,2,2]) - remainder
-
+"""
 rem = check_4_formula([1], 11, 13, (1, 1, -2)) / (1 + 1 + (-2)^7) / PT([1], 2, (1, 1, -2), 13)
 oes = [q * prod(odd_eisenstein(i, prec=13) for i in p).derivative()
  for p in Partitions(10)
@@ -443,3 +445,16 @@ mat = matrix([[t[g] for g in V.gens()]
               for t in eq])
 vec = vector([-t.constant_coefficient() for t in eq])
 sol = mat.solve_right(vec)
+"""
+
+def check_4_n_formula(shape, n, prec):
+    first_part = sum(DTn([], (k1, k2), prec=prec)
+                     * PT(shape, (4-k1, n-k2), prec=prec)
+                     for k1 in range(5) for k2 in range(n+1))
+    remainder = sum(q * DTn([], n-k+1, prec=prec).derivative()
+                    * PT(shape, k, prec=prec) * k
+                    for k in range(n))
+    actual = DTn(shape, (4, n), prec=prec)
+    R.<a,b> = QQ[]; c = -a-b
+    return first_part + a*b*c*remainder == actual
+    
