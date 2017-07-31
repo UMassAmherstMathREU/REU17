@@ -283,6 +283,7 @@ def check_z_series(shape):
     print PTl
     print DTl - PTl * DT0
 
+@cached_method
 def get_remainder(shape, n1, n2, gens, prec=10):
     expected = sum(DT([], (k1, k2), prec=prec) * PT(shape, (n1-k1, n2-k2), prec=prec)
                    for k1 in range(n1 + 1) for k2 in range(n2 + 1))
@@ -301,12 +302,12 @@ def solve_remainder(n1, n2, prec=10, exclude=None):
                  if 4 not in p or len(p) > 1 and p[1] != 3
                  if p not in exclude]
     pt_params = [p for s in range(n1 + n2 + 1)
-                 for p in Partitions(s, min_part=2, max_length=1)]
+                 for p in Partitions(s, min_part=2)]
     params = [(p, dt, pt) for dt in dt_params for pt in pt_params
               if sum(dt) + sum(pt) <= n1 + n2
               for p in Partitions(n1+n2 - sum(dt) - sum(pt),
                                   max_length=1)
-              if p != [1]]
+              if p != [1] and p != [4] and (p != [2] or dt != [4,4])]
     tup2str = lambda t: "_".join(str(i) for i in t)
     var_names = ["x%s__%s__%s" % (tup2str(p), tup2str(dt), tup2str(pt))
                  for p, dt, pt in params]
@@ -398,3 +399,47 @@ def find_4_relation(n, prec):
     vec = vector([-t.constant_coefficient() for t in terms])
     print mat.rank()
     print mat.solve_right(vec)
+
+def check_4_formula(shape, n, prec, gens=None):
+    actual = DTn(shape, (4, n), gens, prec=prec)
+    nice_part = sum(DTn([], (k1, k2), gens, prec=prec)
+                    * PT(shape, (4-k1, n-k2), gens, prec=prec)
+                    for k1 in range(5) for k2 in range(n+1))
+    if gens is None:
+        R.<a,b> = QQ[]; c = -a-b
+    else:
+        a, b, c = gens
+        R = QQ
+    S.<q> = R[[]]
+    m = lambda p: SymmetricFunctions(QQ).monomial()(p).expand(3)(a,b,c)
+    OE = lambda i, j: odd_eisenstein(i, j, prec)(-q)
+    F = [OE(3,1),
+         0,
+         m([2]) * OE(5,1) / 24,
+         m([3]) * OE(3,1) * OE(3,0) / 3,
+         m([4]) * OE(7,1) / 720,
+         m([5]) * (OE(5,1) * OE(3,0) + OE(5,0) * OE(3, 1)) / 60,
+         m([6]) * OE(9,1) / 40320
+         + m([2,2,2]) * (OE(3,1) * OE(3,0)^2 - OE(9,1) / 8640) / 2,
+         0,0,0]
+    remainder = sum(k * PT(shape, k, gens, prec=prec) * F[n-2-k]
+                    for k in range(n-1))
+    print (actual - nice_part) / m([2,2,2])
+    print
+    print remainder
+    print
+    return (actual - nice_part) / m([2,2,2]) - remainder
+
+rem = check_4_formula([1], 11, 13, (1, 1, -2)) / (1 + 1 + (-2)^7) / PT([1], 2, (1, 1, -2), 13)
+oes = [q * prod(odd_eisenstein(i, prec=13) for i in p).derivative()
+ for p in Partitions(10)
+ if all(i % 2 == 1 for i in p)]
+
+V = PolynomialRing(QQ, ['x%d' % d for d, _ in enumerate(oes)])
+oes = [oe.change_ring(V) for oe in oes]
+rem = rem.change_ring(V)
+eq = rem - sum(V('x%d' % d) * oe for d, oe in enumerate(oes))
+mat = matrix([[t[g] for g in V.gens()]
+              for t in eq])
+vec = vector([-t.constant_coefficient() for t in eq])
+sol = mat.solve_right(vec)
