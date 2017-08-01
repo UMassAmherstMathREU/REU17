@@ -305,9 +305,9 @@ def solve_remainder(n1, n2, prec=10, exclude=None):
                  for p in Partitions(s, min_part=2)]
     params = [(p, dt, pt) for dt in dt_params for pt in pt_params
               if sum(dt) + sum(pt) <= n1 + n2
-              for p in Partitions(n1+n2 - sum(dt) - sum(pt),
-                                  max_length=1)
-              if p != [1] and p != [4] and (p != [2] or dt != [4,4])]
+              for p in Partitions(n1+n2 - sum(dt) - sum(pt) - 3)
+              if p != [1]
+              if dt]
     tup2str = lambda t: "_".join(str(i) for i in t)
     var_names = ["x%s__%s__%s" % (tup2str(p), tup2str(dt), tup2str(pt))
                  for p, dt, pt in params]
@@ -325,9 +325,10 @@ def solve_remainder(n1, n2, prec=10, exclude=None):
     print "Computing sum"
     m = SymmetricFunctions(QQ).monomial()
     sums = [sum(P(v) * m(p).expand(3)(a, b, c)
-                * DT([], dt, prec=prec)
+                * q * DTn([], dt, prec=prec).derivative()
+                * DT([], prec=prec)
                 * PT(shape, pt, prec=prec)
-                for v, (p, dt, pt) in zip(var_syms, params))
+                for v, (p, dt, pt) in zip(var_syms, params)) * a * b * c
             for shape in shapes]
     print "Computing difference"
     differences = [r - s for r, s in zip(remainders, sums)]
@@ -448,6 +449,8 @@ sol = mat.solve_right(vec)
 """
 
 def check_4_n_formula(shape, n, prec):
+    R.<a,b> = QQ[]; c = -a-b
+    S.<q> = R[[]]
     first_part = sum(DTn([], (k1, k2), prec=prec)
                      * PT(shape, (4-k1, n-k2), prec=prec)
                      for k1 in range(5) for k2 in range(n+1))
@@ -455,6 +458,28 @@ def check_4_n_formula(shape, n, prec):
                     * PT(shape, k, prec=prec) * k
                     for k in range(n))
     actual = DTn(shape, (4, n), prec=prec)
-    R.<a,b> = QQ[]; c = -a-b
     return first_part + a*b*c*remainder == actual
+    
+def check_5_n_formula(shape, n, prec):
+    R.<a,b> = QQ[]; c = -a-b
+    S.<q> = R[[]]
+    m = lambda n: a^n + b^n + c^n
+    leading_term = sum(DTn([], (k1, k2), prec=prec) *
+                       PT(shape, (5-k1, n-k2), prec=prec)
+                       for k1 in range(6) for k2 in range(n+1))
+    remainder = a * b * c * (
+        sum(q * DTn([], n-k+2, prec=prec).derivative() *
+            PT(shape, k, prec=prec) *
+            (n - 2) * k / 2
+            for k in range(n+3)) -
+        sum(q * DTn([], n-k, prec=prec).derivative() *
+            PT(shape, (k, 2), prec=prec)
+            for k in range(n+1)) -
+        sum(m(2*k) * bernoulli(2*k) / (2*factorial(2*k)) * l *
+            q * DTn([], n-2*k-l+2, prec=prec).derivative() *
+            PT(shape, l, prec=prec)
+            for k in range(1, n/2 + 2)
+            for l in range(n - 2*k + 3)))
+    actual = DTn(shape, (5, n), prec=prec)
+    return actual == leading_term + remainder
     
