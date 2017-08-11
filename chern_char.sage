@@ -10,20 +10,20 @@ def column_sum(value, i, j, m, coeffs, invert):
     a, b, c = coeffs
     if value is None:
         # Infinite column of DT
-        T = a * i + b * j
+        T = b * i + c * j
         return sum((-1)**len(s) * (T + sum(s))**m
-                   for s in powerset([a, b]))
+                   for s in powerset([b, c]))
     elif not invert:
         # Finite part of DT
-        T = lambda k: a * i + b * j + c * k
+        T = lambda k: a * k + b * i + c * j
         return sum((-1)**len(s) * (T(k) + sum(s))**m
                    for k in range(value)
                    for s in powerset([a, b, c]))
     else:
         # Infinite part of PT
-        T = a * i + b * j - (value) * c
+        T = b * i + c * j - (value) * a
         return sum((-1)**len(s) * (T + sum(s)) ** m
-                   for s in powerset([a, b]))
+                   for s in powerset([b, c]))
 
 def chern_character(part, m, coeffs=None, invert=False):
     """ Compute a component of Chern character for a given partition
@@ -63,7 +63,6 @@ def chern_product(part, ks, coeffs=None, invert=False):
 def all_pps(P, size):
     return tuple(P.graded_component(size))
 
-@cached_method
 def new_weighted_sum(P, ks, invert=False, coeffs=None, prec=8):
     if coeffs is None:
         R = PolynomialRing(QQ, 'a,b')
@@ -72,7 +71,8 @@ def new_weighted_sum(P, ks, invert=False, coeffs=None, prec=8):
 
     R = parent(sum(coeffs))
     q = R[['q']].gen()
-    return sum(chern_product(pi, ks, coeffs, invert) * (-q) ** size
+    return sum(chern_product(pi, ks, coeffs, invert) *
+               equiv_vertex_measure(pi, coeffs, invert) * q ** size
                for size in range(prec)
                for pi in all_pps(P, size)) + O(q ** prec)
 
@@ -269,18 +269,21 @@ def check_n_3_formula(shape, n, prec=10):
     assert DT(shape, (n, 3)) == sum(DTPT((k,3), (n-k,)) + DTPT((k,), (n-k,3))
                                     for k in range(n+1))
 
-def check_z_series(shape):
-    qprec = 12
-    zprec = 12
-    R1.<a,b> = QQ[]
-    R2.<q, z1, z2> = R1[[]]
-    DT0 = sum(DT([], (k1, k2), prec=qprec) * z1^k1 * z2^k2
-              for k1 in range(zprec) for k2 in range(zprec)) + O(z1^zprec + z2^zprec)
-    DTl = sum(DT(shape, (k1, k2), prec=qprec) * z1^k1 * z2^k2
-              for k1 in range(zprec) for k2 in range(zprec)) + O(z1^zprec + z2^zprec)
-    PTl = sum(PT(shape, (k1, k2), prec=qprec) * z1^k1 * z2^k2
-              for k1 in range(zprec) for k2 in range(zprec)) + O(z1^zprec + z2^zprec)
-    print PTl
+def check_z_series(shape, use_weights=False, prec=6):
+    if use_weights:
+        R1 = Frac(QQ['a,b,c'])
+        gens = R1.gens()
+    else:
+        R1 = Frac(QQ['a,b'])
+        a, b = R1.gens()
+        gens = (a,b,-a-b)
+    R2.<q, z> = R1[[]]
+    DT0 = sum(DT([], k, gens, prec) * z^k
+              for k in range(prec)) + O(z^prec)
+    DTl = sum(DT(shape, k, gens, prec) * z^k
+              for k in range(prec)) + O(z^prec)
+    PTl = sum(PT(shape, k, gens, prec) * z^k
+              for k in range(prec)) + O(z^prec)
     print DTl - PTl * DT0
 
 @cached_method
@@ -305,9 +308,8 @@ def solve_remainder(n1, n2, prec=10, exclude=None):
                  for p in Partitions(s, min_part=2)]
     params = [(p, dt, pt) for dt in dt_params for pt in pt_params
               if sum(dt) + sum(pt) <= n1 + n2
-              for p in Partitions(n1+n2 - sum(dt) - sum(pt) - 3)
-              if p != [1]
-              if dt]
+              for p in Partitions(n1+n2 - sum(dt) - sum(pt), max_length=1)
+              if p != [1]]
     tup2str = lambda t: "_".join(str(i) for i in t)
     var_names = ["x%s__%s__%s" % (tup2str(p), tup2str(dt), tup2str(pt))
                  for p, dt, pt in params]
@@ -325,10 +327,10 @@ def solve_remainder(n1, n2, prec=10, exclude=None):
     print "Computing sum"
     m = SymmetricFunctions(QQ).monomial()
     sums = [sum(P(v) * m(p).expand(3)(a, b, c)
-                * q * DTn([], dt, prec=prec).derivative()
+                * DTn([], dt, prec=prec)
                 * DT([], prec=prec)
                 * PT(shape, pt, prec=prec)
-                for v, (p, dt, pt) in zip(var_syms, params)) * a * b * c
+                for v, (p, dt, pt) in zip(var_syms, params))
             for shape in shapes]
     print "Computing difference"
     differences = [r - s for r, s in zip(remainders, sums)]
@@ -470,7 +472,7 @@ def check_5_n_formula(shape, n, prec):
     remainder = a * b * c * (
         sum(q * DTn([], n-k+2, prec=prec).derivative() *
             PT(shape, k, prec=prec) *
-            (n - 2) * k / 2
+            (n + 1) * k / 2
             for k in range(n+3)) -
         sum(q * DTn([], n-k, prec=prec).derivative() *
             PT(shape, (k, 2), prec=prec)
@@ -478,8 +480,75 @@ def check_5_n_formula(shape, n, prec):
         sum(m(2*k) * bernoulli(2*k) / (2*factorial(2*k)) * l *
             q * DTn([], n-2*k-l+2, prec=prec).derivative() *
             PT(shape, l, prec=prec)
-            for k in range(1, n/2 + 2)
+            for k in range(n/2 + 2)
             for l in range(n - 2*k + 3)))
     actual = DTn(shape, (5, n), prec=prec)
     return actual == leading_term + remainder
     
+def equiv_vertex_measure(partition, params, invert):
+    """ Compute the equivariant vertex measure, w(pi)
+
+    The partition can be given as a SkewPlanePartition.
+    The parameters are given as a tuple (s1, s2, s3).
+    """
+    R.<t1,t2,t3> = LaurentPolynomialRing(QQ)
+    s1, s2, s3 = params
+    # Finite part of partition = Qf
+    # Infinite part = Qab
+    if not invert:
+        # DT side
+        Qf = sum(t1^k * t2^i * t3^j
+                 for i, row in enumerate(partition)
+                 for j, height in enumerate(row)
+                 if height is not None
+                 for k in range(height)) + R(0)
+        Qab = sum(t2^i * t3^j
+                  for i, row in enumerate(partition)
+                  for j, height in enumerate(row)
+                  if height is None) + R(0)
+    else:
+        # PT side, still sum boxes *above*
+        Qf = sum(t1^(-1-k) * t2^i * t3^j
+                 for i, row in enumerate(partition)
+                 for j, height in enumerate(row)
+                 for k in range(height)) + R(0)
+        Qab = sum(t2^i * t3^j
+                  for i, row in enumerate(partition)
+                  for j, height in enumerate(row)) + R(0)
+    # At this point, Qa = Qab/(1-t1) + Qf
+    # The pole at t1 = 1 cancels
+    Qf_bar = Qf(1/t1, 1/t2, 1/t3)
+    Qab_bar = Qab(1/t1, 1/t2, 1/t3)
+    Va = Qf + (-Qf_bar + (1 - t2) * (1 - t3) *
+               (Qab * Qf_bar - t1 * Qab_bar * Qf
+                + (1 - t1) * Qf * Qf_bar)) / (t1 * t2 * t3)
+    return prod((s1 * i + s2 * j + s3 * k)^(-c)
+                for c, (i, j, k) in zip(Va.coefficients(),
+                                        Va.exponents()))
+    
+def check_macmahon_equiv(prec=6):
+    """ Check that DT = M(-q)^D """
+    R.<a,b,c> = QQ[]
+    P.<q> = R[[]]
+    D = -(a+b) * (a+c) * (b+c) / (a * b * c)
+    # Compute M(-q)^D = prod 1/(1-(-q)^k)^Dk using binomial series
+    predicted = prod(sum(binomial(-k * D, l) * (-(-q)^k)^l
+                         for l in range(prec)
+                         if l*k < prec)
+                     for k in range(prec)) + O(q^prec)
+    actual = DT([], (), (a,b,c), prec)
+    return predicted == actual
+    
+def check_pt_1(prec=10):
+    """ Check PT([1]) == (1+q)^((s2+s3)/s1) """
+    R.<a,b,c> = QQ[]
+    P.<q> = R[[]]
+    predicted = sum(binomial((b + c) / a, k) * q^k
+                    for k in range(prec)) + O(q^prec)
+    actual = PT([1], (), (a,b,c), prec)
+    return predicted == actual
+
+def check_ptdt(shape, prec=6):
+    """ Check PT == DTn """
+    R.<a,b,c> = QQ[]
+    return PT(shape, (), (a,b,c), prec) == DTn(shape, (), (a,b,c), prec)
