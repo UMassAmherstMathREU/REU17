@@ -488,7 +488,10 @@ def check_5_n_formula(shape, n, prec):
 def equiv_vertex_measure(partition, params, invert):
     """ Compute the equivariant vertex measure, w(pi)
 
-    The partition can be given as a SkewPlanePartition.
+    The partition can be given as a SkewPlanePartition,
+    ReversePlanePartition, or anything interpreted as a
+    list of lists, with None indicating an infinite tail.
+
     The parameters are given as a tuple (s1, s2, s3).
     """
     R.<t1,t2,t3> = LaurentPolynomialRing(QQ)

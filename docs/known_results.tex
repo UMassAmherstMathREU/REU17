@@ -1,0 +1,135 @@
+\documentclass{amsart}
+\usepackage{amsthm}
+\newtheorem{defn}{Definition}
+\newtheorem{conj}{Conjecture}
+\newcommand{\pt}[1]{\mathbb{P}_\mathrm{PT}^{#1}}
+\newcommand{\dt}[1]{\mathbb{P}_\mathrm{DT}^{#1}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\HG}[1]{\mathrm{HG}_{#1}}
+\newcommand{\hg}[1]{\mathrm{hg}_{#1}}
+\newcommand{\Rem}{\mathrm{Rem}}
+\newcommand{\ch}{\mathrm{ch}}
+\newcommand{\dd}[1]{\frac{d}{d #1}}
+\begin{document}
+\section{PT/DT Correspondence with one insertion}
+\begin{defn}
+  Fix $t_1 + t_2 + t_3 = 0$.  Let $k_1, \cdots, k_n \in \NN$.
+  Define
+  \[
+    PT_\lambda(k_1, \cdots, k_n; q)
+    = \sum_{\pi\in\pt{\lambda}} (-q)^{|\pi|}
+    \prod_{i = 1}^n \ch_{k_i}(\pi)
+  \]
+  \[
+    DT_\lambda(k_1, \cdots, k_n; q)
+    = \sum_{\pi\in\dt{\lambda}} (-q)^{|\pi|}
+    \prod_{i = 1}^n \ch_{k_i}(\pi)
+  \]
+  \[
+    DT_\lambda'(k_1, \cdots, k_n; q)
+    = \frac{DT_\lambda(k_1, \cdots, k_n; q)}{DT_\emptyset(q)}
+  \]
+  where $\ch_k$ is defined by the series
+  \[
+    \sum_{k = 0}^\infty \ch_k(\pi)z^k =
+    1 - \prod_{i=1}^3\left(1 - e^{t_i z}\right)
+    \sum_{\square\in\pi} e^{T(\square)z}
+  \]
+  with $T(i, j, k) = t_1i + t_2j + t_3k$.
+\end{defn}
+It will be useful to handle all values of $k$ at once by adding a new
+variable:
+\begin{defn}
+  \[ PT_\lambda(z, q) = \sum_{k \geq 0} PT(k; q)z^k \]
+  \[ DT'_\lambda(z, q) = \sum_{k \geq 0} DT'(k; q)z^k \]
+\end{defn}
+\begin{conj}
+  For any partition $\lambda$,
+  \[ DT'_\lambda(z, q) = DT'_\emptyset(z, q)PT_\lambda(z, q) \]
+  Or more explicitely,
+  \[ DT'_\lambda(k; q) =
+    \sum_{l = 0}^k DT'_\emptyset(l; q)PT_\lambda(k - l; q) \]
+\end{conj}
+This was checked using the SageMath code in \texttt{chern\_char.sage}.
+
+\section{Two Insertions}
+For the two insertion case, the formula is not quite as simple.  We
+can still define the series
+\[
+  PT_\lambda(z_1, z_2, q) =
+  \sum_{k_1, k_2 \geq 0} PT_\lambda(k_1, k_2; q) z_1^{k_1} z_2^{k_2}
+\]
+\[
+  DT_\lambda'(z_1, z_2, q) =
+  \sum_{k_1, k_2 \geq 0} DT_\lambda'(k_1, k_2; q) z_1^{k_1} z_2^{k_2}
+\]
+
+In this case, we have some remainder term:
+\[
+  DT_\lambda'(z_1, z_2, q)
+  = DT_\emptyset'(z_1, z_2, q) PT_\lambda(z_1, z_2, q)
+  + t_1t_2t_3 Rem(z_1, z_2, q)
+\]
+where
+\[
+  Rem(z_1, z_2, q) = \sum_{k_1, k_2} Rem(k_1, k_2; q)z_1^{k_1}z_2^{k_2}
+\]
+For $\min(k_1, k_2) \leq 3$, $Rem(k_1, k_2; q) = 0$.  When $k_1, k_2 \geq 4$, we have more interesting behavior.
+
+\subsection{For $k_1=4$}
+In this case, we have
+\[
+  [z_1^4] Rem(z_1, z_2, q) =
+  \left(q\dd q DT'_\emptyset(z_2, q)\right)
+  \left(\dd{z_2} PT_\lambda(z_2, q)\right)
+\]
+This is verified by the sage function \texttt{check\_4\_n\_formula}.
+
+\subsection{For $k_1=5$}
+Here, we have
+\begin{align*}
+  [z_1^5] Rem(z_1, z_2, q) =
+  &\frac{1}{2}\left(\dd{z_2} - \frac{P'}{P}\right)
+  \left[
+    \left(q\dd q DT'_\emptyset(z_2, q)\right)
+    \left(\dd{z_2} PT_\lambda(z_2, q)\right)
+  \right] \\
+  &- \left(q\dd q DT'_\emptyset(z_2, q)\right)PT_\lambda(z_2, 2, q)
+\end{align*}
+Where
+\[
+  P = \prod_{i=1}^3 (1 - e^{t_i})
+\]
+
+\subsection{For $k_1 \geq 6$}
+I can explicitely compute $(6,6)$, but after $(7,6)$, the computation
+fails with the current setup.
+
+The coefficients for $(6,6)$ look like they include a term of the form
+\[
+  \frac{1}{6}\left(\dd z_2\right)^2 \left[
+    \left(q\dd q DT'_\emptyset(z_2, q)\right)
+    \left(\dd{z_2}PT_\lambda(z_2, q)\right)\right]
+\]
+This suggests that the term $1/n! (d/dz_2)^{n-1}$ always appears.  If
+we re-write the derivative on the second term using the product rule,
+we can get a term $1/n! (d/dz_2)^{n}$, which suggests something like
+the substitution $z \leftarrow z_1 + z_2$ to handle these terms.  This
+may be related to the $P'/P$ that appears.
+
+In $(6,6)$, terms involving $PT(\cdot, 3)$ appear, suggesting that at
+most $PT(k_1-3, k_2-3)$ appears when there are two insertions on the
+PT side.
+
+Possibly, we need to add something of the form $(t_1t_2t_3)^2$, with a
+second derivative on the DT side, and so on.  I would try the
+computation modulo $(t_1t_2t_3)^2$, but it seems that the remainder is
+divisible by $t_1t_2t_3$, so this would always give zero remainder.
+Maybe I should try modulo $(t_1t_2t_3)^3$.
+
+\section{Equivarient Vertex Weight}
+When we remove the assumption $t_1 + t_2 + t_3 = 0$ and add the vertex
+weight to the calculation, the formula for one insertion still holds.
+I haven't checked the partial result we have for two insertions.
+\end{document}
