@@ -159,20 +159,20 @@ class HillmanGrasslTableaux(Tableaux):
 
         return HillmanGrasslTableaux_size(shape_part, size)
 
-    def from_integer_vector(self, vec):
-        if vec not in IntegerVectors():
-            raise ValueError("%s is not an integer vector" % vec)
-        if self._shape.size() != len(vec):
-            raise ValueError("%s is not length %d" %
-                             (vec, self._shape.size()))
+    def _from_integer_vector(self, vec):
+        #if vec not in IntegerVectors():
+        #    raise ValueError("%s is not an integer vector" % vec)
+        #if self._shape.size() != len(vec):
+        #    raise ValueError("%s is not length %d" %
+        #                     (vec, self._shape.size()))
         tableau = []
         pos = 0
         for rowlen in self._shape:
             tableau += [vec[pos:(pos + rowlen)]]
             pos += rowlen
 
-        if tableau not in self:
-            raise ValueError("%s is not in %s" % (tableau, self))
+        #if tableau not in self:
+        #    raise ValueError("%s is not in %s" % (tableau, self))
 
         return self.element_class(self, tableau)
 
@@ -195,7 +195,7 @@ class HillmanGrasslTableaux_size(HillmanGrasslTableaux):
         return WeightedIntegerVectors(self._size, hooks)
 
     def __iter__(self):
-        return (self.from_integer_vector(vec)
+        return (self._from_integer_vector(vec)
                 for vec in self._weighted_integer_vectors())
 
     def cardinality(self):
@@ -203,7 +203,7 @@ class HillmanGrasslTableaux_size(HillmanGrasslTableaux):
 
     def random_element(self):
         vec = self._weighted_integer_vectors().random_element()
-        return self.from_integer_vector(vec)
+        return self._from_integer_vector(vec)
 
 class HillmanGrasslTableaux_all(HillmanGrasslTableaux,
                                 DisjointUnionEnumeratedSets):

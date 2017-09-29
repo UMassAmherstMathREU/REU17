@@ -10,20 +10,20 @@ def column_sum(value, i, j, m, coeffs, invert):
     a, b, c = coeffs
     if value is None:
         # Infinite column of DT
-        T = a * i + b * j
+        T = b * i + c * j
         return sum((-1)**len(s) * (T + sum(s))**m
-                   for s in powerset([a, b]))
+                   for s in powerset([b, c]))
     elif not invert:
         # Finite part of DT
-        T = lambda k: a * i + b * j + c * k
+        T = lambda k: a * k + b * i + c * j
         return sum((-1)**len(s) * (T(k) + sum(s))**m
                    for k in range(value)
                    for s in powerset([a, b, c]))
     else:
         # Infinite part of PT
-        T = a * i + b * j - (2 + value) * c
-        return -sum((-1)**len(s) * (T + sum(s)) ** m
-                    for s in powerset([a, b]))
+        T = b * i + c * j - (value) * a
+        return sum((-1)**len(s) * (T + sum(s)) ** m
+                   for s in powerset([b, c]))
 
 def chern_character(part, m, coeffs=None, invert=False):
     """ Compute a component of Chern character for a given partition
@@ -53,7 +53,7 @@ def chern_character(part, m, coeffs=None, invert=False):
     return -sum(column_sum(val, i, j, m, coeffs, invert)
                 for i, row in enumerate(part)
                 for j, val in enumerate(row)) / factorial(m)
-    
+
 def chern_product(part, ks, coeffs=None, invert=False):
     if ks in ZZ:
         ks = (ks,)
@@ -63,16 +63,16 @@ def chern_product(part, ks, coeffs=None, invert=False):
 def all_pps(P, size):
     return tuple(P.graded_component(size))
 
-@cached_method
 def new_weighted_sum(P, ks, invert=False, coeffs=None, prec=8):
     if coeffs is None:
         R = PolynomialRing(QQ, 'a,b')
         a, b = R.gens()
         coeffs = (a, b, -a-b)
-    
+
     R = parent(sum(coeffs))
     q = R[['q']].gen()
-    return sum(chern_product(pi, ks, coeffs, invert) * (-q) ** size
+    return sum(chern_product(pi, ks, coeffs, invert) *
+               equiv_vertex_measure(pi, coeffs, invert) * q ** size
                for size in range(prec)
                for pi in all_pps(P, size)) + O(q ** prec)
 
@@ -98,13 +98,16 @@ def check_all_0():
         print "Checking k={}, lambda={}".format(ks, part)
         assert PT(part, ks, (1, -1, 0)) == 0
 
-def odd_eisenstein(n, prec=8):
+def odd_eisenstein(n, k=0, prec=8):
     if n < 0 or n % 2 == 0:
         raise ValueError("{} is not positive and odd".format(n))
     q = QQ[['q']].gen()
-    return sum(d ** (n-1) * q ** i
-               for i in range(1, prec)
-               for d in divisors(i)) + O(q**prec)
+    E =  sum(d ** (n-1) * q ** i
+             for i in range(1, prec)
+             for d in divisors(i)) + O(q**prec)
+    for i in range(k):
+        E = q * E.derivative()
+    return E
 
 def check_formulas():
     # make sure we work in the right ring
@@ -114,11 +117,11 @@ def check_formulas():
     q = PS.gen()
     c = -a-b
     D = (a + b) * (a + c) * (b + c)
-    
+
     E = lambda n: PS(odd_eisenstein(n))
     monomial = SymmetricFunctions(QQ).monomial()
     m = lambda p: monomial(p).expand(3)(a,b,c)
-    
+
     assert DTn([], 3) == -D * E(3)(-q), "DT3"
     assert DTn([], 4) == 0, "DT4"
     assert DTn([], 5) == -D/12 * (m([2]) + m([1,1])) * E(5)(-q), "DT5"
@@ -132,17 +135,16 @@ def check_formulas():
 def ptdt_prod(shape, k1, k2, n, gens, prec):
     a, b, c = gens
     l = n - sum(k1) - sum(k2)
+    k2 = tuple(k for k in k2 if k != 0)
     if l < 0:
         return 0
-    coeff = (-1) ** len(k2) * (2 * c) ** l / factorial(l)
     dt = DT([], k1, prec=prec).change_ring(c.parent())
     pt = PT(shape, k2, prec=prec).change_ring(c.parent())
-    return coeff * dt * pt
+    return dt * pt
 
-def solve_matrix(solve_for, prec=8):
-    inds = [p for s in range(sum(solve_for)+1)
-            for p in Partitions(s, min_part=2,
-                                max_length=len(solve_for))]
+def solve_matrix(solve_for, use_all_inds=False, remainder=False, prec=8):
+    inds = [p for s in range(sum(solve_for) + 1)
+            for p in Partitions(s, min_part=2)]
     indstr = ["".join(str(x) for x in ind) if ind else "0"
               for ind in inds]
     varnames = ['x%s_%s' % (ind1, ind2)
@@ -152,12 +154,18 @@ def solve_matrix(solve_for, prec=8):
     known = {(i, j): 0
              for i, ti in enumerate(inds)
              for j, tj in enumerate(inds)
-             if sum(ti) + sum(tj) > sum(solve_for)}
-    
+             if sum(ti) + sum(tj) != sum(solve_for)}
+
+    print solve_for
+    print len(known)
     for i, ti in enumerate(inds):
         for j, tj in enumerate(inds):
-            if DT([], ti) == 0 or PT([1,1], tj) == 0 or 2 in ti:
+            if DT([], ti, prec=prec) == 0 or (PT([2,1], tj, prec=prec) == 0 and
+                                              PT([1,1], tj, prec=prec) == 0 and
+                                              PT([1], tj, prec=prec) == 0 and
+                                              PT([], tj, prec=prec) == 0):
                 known[i, j] = 0
+    print len(known)
 
     R1 = PolynomialRing(QQ, varnames)
     R2.<a,b> = R1[]
@@ -173,6 +181,11 @@ def solve_matrix(solve_for, prec=8):
         print "Getting equations for {}".format(shape)
         shape = Partition(shape)
         DT1 = DT(shape, solve_for, gens, prec)
+        if remainder:
+            n1, n2 = solve_for
+            DT1 -= sum(ptdt_prod(shape, (k1, k2), (n1-k1, n2-k2), n1+n2, gens, prec)
+                       for k1 in range(n1+1)
+                       for k2 in range(n2+1))
         DT2 = sum(get_var(i, j) *
                   ptdt_prod(shape, ti, tj, sum(solve_for), gens, prec)
                   for i, ti in enumerate(inds)
@@ -188,6 +201,8 @@ def solve_matrix(solve_for, prec=8):
                 for i, ti in enumerate(inds)
                 for j, tj in enumerate(inds)
                 if (i, j) not in known]
+    print len(known)
+    print len(inds)
     mat = matrix([[t[g] for g in unknowns]
                   for t in terms])
     vec = vector(-t.constant_coefficient() for t in terms)
@@ -222,50 +237,21 @@ def find_all():
 ### Check formulas
 def known_formulas(shape):
     R1.<a,b> = QQ[]
+    c = -a-b
     R2.<q> = R1[[]]
     assert DTn(shape) == PT(shape), "No insertions"
     assert DTn(shape, 1) == 0, "DT(1)"
     assert PT(shape, 1) == 0, "PT(1)"
     assert DTn(shape, 2) == -PT(shape, 2), "DTn(2)"
-    assert DTn(shape, 3) == (-2 * c * PT(shape, 2)
-                             - PT(shape, 3)
+    assert DTn(shape, 3) == (-PT(shape, 3)
                              + DTn([], 3) * PT(shape)), "DTn(3)"
-    assert DTn(shape, 4) == (-2 * c^2 * PT(shape, 2)
-                             -2 * c * PT(shape, 3)
-                             -PT(shape, 4)), "DTn(4)"
-    assert DTn(shape, 5) == (-4/3 * c^3 * PT(shape, 2)
-                             -2 * c^2 * PT(shape, 3)
-                             -2 * c * PT(shape, 4)
-                             -PT(shape, 5)
+    assert DTn(shape, 4) == -PT(shape, 4), "DTn(4)"
+    assert DTn(shape, 5) == (-PT(shape, 5)
                              -DTn([], 3) * PT(shape, 2)
                              +DTn([], 5) * PT(shape)), "DTn(5)"
-    assert DTn(shape, 6) == (-2/3 * c^4 * PT(shape, 2)
-                             -4/3 * c^3 * PT(shape, 3)
-                             -2 * c^2 * PT(shape, 4)
-                             -2 * c * PT(shape, 5)
-                             -PT(shape, 6)
-                             -2 * c * DTn([], 3) * PT(shape, 2)
+    assert DTn(shape, 6) == (-PT(shape, 6)
                              -DTn([], 3) * PT(shape, 3)
                              +DTn([], 6) * PT(shape)), "DTn(6)"
-    assert DTn(shape, 7) == (
-        sum(-(2*c)^n/factorial(n) * PT(shape, 7-n) for n in range(7))
-        + DTn([], 7) * PT(shape)
-        #- DTn([], 6) * PT(shape, 1) # == 0
-        - DTn([], 5) * PT(shape, 2)
-        #- DTn([], 4) * PT(shape, 3) # == 0
-        - DTn([], 3) * PT(shape, 4)
-        #- DTn([], 2) * PT(shape, 5) # == 0
-        #- DTn([], 1) * PT(shape, 6) # == 0
-        #- 2 * c * DTn([], 5) * PT(shape, 1) # == 0
-        #- 2 * c * DTn([], 4) * PT(shape, 2) # == 0
-        - 2 * c * DTn([], 3) * PT(shape, 3)
-        #- 2 * c * DTn([], 2) * PT(shape, 4) # == 0
-        #- 2 * c * DTn([], 1) * PT(shape, 5) # == 0
-        #- 2 * c^2 * DTn([], 4) * PT(shape, 1) # == 0
-        - 2 * c^2 * DTn([], 3) * PT(shape, 2)
-        #- 2 * c^2 * DTn([], 2) * PT(shape, 3) # == 0
-        #- 2 * c^2 * DTn([], 1) * PT(shape, 4) # == 0
-        )
     # Coefficients for PT are 2^n/n!
     # Same in fact for DT
     # I think we have a conjecture!
@@ -273,8 +259,299 @@ def known_formulas(shape):
 # General case -- this is really cool!
 def check_pt_dt_formula(shape, n, prec=10):
     assert DT(shape, n) == (
-        DT([], n, prec=prec) * PT(shape, prec=prec)
-        + sum(-(2*c)^(n-i-j)/factorial(n-i-j)
-              * DT([], i, prec=prec) * PT(shape, j, prec=prec)
-              for i in range(0, n+1)
-              for j in range(1, n-i+1)))
+        sum(DT([], k, prec=prec) * PT(shape, n-k, prec=prec)
+            for k in range(n+1)))
+
+def check_n_3_formula(shape, n, prec=10):
+    R.<a,b> = QQ[]
+    gens = (a,b,-a-b)
+    DTPT = lambda k1, k2: ptdt_prod(shape, k1, k2, n+3, gens, prec)
+    assert DT(shape, (n, 3)) == sum(DTPT((k,3), (n-k,)) + DTPT((k,), (n-k,3))
+                                    for k in range(n+1))
+
+def check_z_series(shape, use_weights=False, prec=6):
+    if use_weights:
+        R1 = Frac(QQ['a,b,c'])
+        gens = R1.gens()
+    else:
+        R1 = Frac(QQ['a,b'])
+        a, b = R1.gens()
+        gens = (a,b,-a-b)
+    R2.<q, z> = R1[[]]
+    DT0 = sum(DT([], k, gens, prec) * z^k
+              for k in range(prec)) + O(z^prec)
+    DTl = sum(DT(shape, k, gens, prec) * z^k
+              for k in range(prec)) + O(z^prec)
+    PTl = sum(PT(shape, k, gens, prec) * z^k
+              for k in range(prec)) + O(z^prec)
+    print DTl - PTl * DT0
+
+@cached_method
+def get_remainder(shape, n1, n2, gens, prec=10):
+    expected = sum(DT([], (k1, k2), prec=prec) * PT(shape, (n1-k1, n2-k2), prec=prec)
+                   for k1 in range(n1 + 1) for k2 in range(n2 + 1))
+    actual = DT(shape, (n1, n2), prec=prec)
+    remainder = actual - expected
+    a,b,c = gens
+    D = (a+b)*(a+c)*(b+c)
+    return remainder
+
+def solve_remainder(n1, n2, prec=10, exclude=None):
+    if exclude is None:
+        exclude = []
+    shapes = [(), (1,), (1,1), (2,1), (2,1,1), (2,2)]
+    dt_params = [p for s in range(n1 + n2 + 1)
+                 for p in Partitions(s, min_part=3)
+                 if 4 not in p or len(p) > 1 and p[1] != 3
+                 if p not in exclude]
+    pt_params = [p for s in range(n1 + n2 + 1)
+                 for p in Partitions(s, min_part=2)]
+    params = [(p, dt, pt) for dt in dt_params for pt in pt_params
+              if sum(dt) + sum(pt) <= n1 + n2
+              for p in Partitions(n1+n2 - sum(dt) - sum(pt), max_length=1)
+              if p != [1]]
+    tup2str = lambda t: "_".join(str(i) for i in t)
+    var_names = ["x%s__%s__%s" % (tup2str(p), tup2str(dt), tup2str(pt))
+                 for p, dt, pt in params]
+    V = PolynomialRing(QQ, var_names)
+    R.<a,b> = V[]
+    P.<q> = R[[]]
+    c = -a-b
+    gens = (a, b, c)
+
+    print "Computing remainders"
+    remainders = [get_remainder(shape, n1, n2, gens, prec) for shape in shapes]
+
+    print remainders
+    var_syms = [V(name) for name in var_names]
+    print "Computing sum"
+    m = SymmetricFunctions(QQ).monomial()
+    sums = [sum(P(v) * m(p).expand(3)(a, b, c)
+                * DTn([], dt, prec=prec)
+                * DT([], prec=prec)
+                * PT(shape, pt, prec=prec)
+                for v, (p, dt, pt) in zip(var_syms, params))
+            for shape in shapes]
+    print "Computing difference"
+    differences = [r - s for r, s in zip(remainders, sums)]
+    terms = [t for d in differences for s in d for t, _ in R(s)]
+    print "Building matrix"
+    mat = matrix([[t[g] for g in var_syms]
+                  for t in terms])
+    vec = vector([-t.constant_coefficient() for t in terms])
+    print
+    print "rank", mat.rank()
+    print "unknowns", len(var_syms)
+    print "Solving"
+    if mat.rank() != len(var_syms):
+        for i, v in zip(mat.right_kernel().matrix()[0], var_names):
+            print v, i
+
+    solution = mat.solve_right(vec)
+    return {name: value for name, value in zip(var_names, solution)
+            if value != 0}
+
+def find_dt_relations(n, prec):
+    params = [([n-s], dt)
+              for s in range(n+1)
+              if n - s != 1
+              for dt in Partitions(s, min_part=3)
+              if 4 not in dt or len(dt) > 1 and dt[1] != 3]
+    m = SymmetricFunctions(QQ).monomial()
+    tup2str = lambda t: "_".join(str(i) for i in t)
+    var_names = ["x%s__%s" % (tup2str(p), tup2str(dt))
+                 for p, dt in params]
+    V = PolynomialRing(QQ, var_names)
+    R.<a,b> = V[]
+    P.<q> = R[[]]
+    c = -a-b
+    var_syms = [V(name) for name in var_names]
+    m = SymmetricFunctions(QQ).monomial()
+    print "Building equations"
+    s = sum(P(v) * m(p).expand(3)(a, b, c) * DT([], dt, prec=prec)
+            for v, (p, dt) in zip(var_syms, params))
+    terms = [t for qterm in s for t, _ in qterm]
+    mat = matrix([[t[g] for g in var_syms]
+                  for t in terms])
+    print "Finding kernel"
+    K = mat.right_kernel()
+    for row in K.matrix():
+        print
+        print "Found relation:"
+        for (p, dt), value in zip(params, row):
+            if value != 0:
+                print "{} * m_{} * DT_0({})".format(value, p[0], dt)
+        print "sums to 0"
+
+def find_4_relation(n, prec):
+    V.<x,y,z,w> = QQ[]
+    R.<a,b> = V[]
+    c = -a-b
+    gens = (a, b, c)
+    m2 = a^2 + b^2 + c^2
+    s1 = m2 * sum(DT([], (k, n-k), gens, prec) * (-1)^k
+                  for k in range(n+1))
+    s2 = sum(DT([], (k, n-k+2), gens, prec) * (-1)^k
+             for k in range(n+3))
+    d1 = m2 * DT([], (4, n-4), gens, prec)
+    d2 = DT([], (4, n-2), gens, prec)
+    d3 = (a^4 + b^4 + c^4) * DT([], (4, n-6), gens, prec)
+    eq = s1 + x * s2 + y * d1 + z * d2 + w * d3
+    terms = [t for qterm in eq for t, _ in qterm]
+    mat = matrix([[t[x], t[y], t[z], t[w]] for t in terms])
+    vec = vector([-t.constant_coefficient() for t in terms])
+    print mat.rank()
+    print mat.solve_right(vec)
+
+def check_4_formula(shape, n, prec, gens=None):
+    actual = DTn(shape, (4, n), gens, prec=prec)
+    nice_part = sum(DTn([], (k1, k2), gens, prec=prec)
+                    * PT(shape, (4-k1, n-k2), gens, prec=prec)
+                    for k1 in range(5) for k2 in range(n+1))
+    if gens is None:
+        R.<a,b> = QQ[]; c = -a-b
+    else:
+        a, b, c = gens
+        R = QQ
+    S.<q> = R[[]]
+    m = lambda p: SymmetricFunctions(QQ).monomial()(p).expand(3)(a,b,c)
+    OE = lambda i, j: odd_eisenstein(i, j, prec)(-q)
+    F = [OE(3,1),
+         0,
+         m([2]) * OE(5,1) / 24,
+         m([3]) * OE(3,1) * OE(3,0) / 3,
+         m([4]) * OE(7,1) / 720,
+         m([5]) * (OE(5,1) * OE(3,0) + OE(5,0) * OE(3, 1)) / 60,
+         m([6]) * OE(9,1) / 40320
+         + m([2,2,2]) * (OE(3,1) * OE(3,0)^2 - OE(9,1) / 8640) / 2,
+         0,0,0]
+    remainder = sum(-k * PT(shape, k, gens, prec=prec) *
+                    q * DTn([], n - k + 1, gens, prec=prec).derivative()
+                    / D
+                    for k in range(n-1))
+    print (actual - nice_part) / m([2,2,2])
+    print
+    print remainder
+    print
+    return (actual - nice_part) / m([2,2,2]) - remainder
+"""
+rem = check_4_formula([1], 11, 13, (1, 1, -2)) / (1 + 1 + (-2)^7) / PT([1], 2, (1, 1, -2), 13)
+oes = [q * prod(odd_eisenstein(i, prec=13) for i in p).derivative()
+ for p in Partitions(10)
+ if all(i % 2 == 1 for i in p)]
+
+V = PolynomialRing(QQ, ['x%d' % d for d, _ in enumerate(oes)])
+oes = [oe.change_ring(V) for oe in oes]
+rem = rem.change_ring(V)
+eq = rem - sum(V('x%d' % d) * oe for d, oe in enumerate(oes))
+mat = matrix([[t[g] for g in V.gens()]
+              for t in eq])
+vec = vector([-t.constant_coefficient() for t in eq])
+sol = mat.solve_right(vec)
+"""
+
+def check_4_n_formula(shape, n, prec):
+    R.<a,b> = QQ[]; c = -a-b
+    S.<q> = R[[]]
+    first_part = sum(DTn([], (k1, k2), prec=prec)
+                     * PT(shape, (4-k1, n-k2), prec=prec)
+                     for k1 in range(5) for k2 in range(n+1))
+    remainder = sum(q * DTn([], n-k+1, prec=prec).derivative()
+                    * PT(shape, k, prec=prec) * k
+                    for k in range(n))
+    actual = DTn(shape, (4, n), prec=prec)
+    return first_part + a*b*c*remainder == actual
+    
+def check_5_n_formula(shape, n, prec):
+    R.<a,b> = QQ[]; c = -a-b
+    S.<q> = R[[]]
+    m = lambda n: a^n + b^n + c^n
+    leading_term = sum(DTn([], (k1, k2), prec=prec) *
+                       PT(shape, (5-k1, n-k2), prec=prec)
+                       for k1 in range(6) for k2 in range(n+1))
+    remainder = a * b * c * (
+        sum(q * DTn([], n-k+2, prec=prec).derivative() *
+            PT(shape, k, prec=prec) *
+            (n + 1) * k / 2
+            for k in range(n+3)) -
+        sum(q * DTn([], n-k, prec=prec).derivative() *
+            PT(shape, (k, 2), prec=prec)
+            for k in range(n+1)) -
+        sum(m(2*k) * bernoulli(2*k) / (2*factorial(2*k)) * l *
+            q * DTn([], n-2*k-l+2, prec=prec).derivative() *
+            PT(shape, l, prec=prec)
+            for k in range(n/2 + 2)
+            for l in range(n - 2*k + 3)))
+    actual = DTn(shape, (5, n), prec=prec)
+    return actual == leading_term + remainder
+    
+def equiv_vertex_measure(partition, params, invert):
+    """ Compute the equivariant vertex measure, w(pi)
+
+    The partition can be given as a SkewPlanePartition,
+    ReversePlanePartition, or anything interpreted as a
+    list of lists, with None indicating an infinite tail.
+
+    The parameters are given as a tuple (s1, s2, s3).
+    """
+    R.<t1,t2,t3> = LaurentPolynomialRing(QQ)
+    s1, s2, s3 = params
+    # Finite part of partition = Qf
+    # Infinite part = Qab
+    if not invert:
+        # DT side
+        Qf = sum(t1^k * t2^i * t3^j
+                 for i, row in enumerate(partition)
+                 for j, height in enumerate(row)
+                 if height is not None
+                 for k in range(height)) + R(0)
+        Qab = sum(t2^i * t3^j
+                  for i, row in enumerate(partition)
+                  for j, height in enumerate(row)
+                  if height is None) + R(0)
+    else:
+        # PT side, still sum boxes *above*
+        Qf = sum(t1^(-1-k) * t2^i * t3^j
+                 for i, row in enumerate(partition)
+                 for j, height in enumerate(row)
+                 for k in range(height)) + R(0)
+        Qab = sum(t2^i * t3^j
+                  for i, row in enumerate(partition)
+                  for j, height in enumerate(row)) + R(0)
+    # At this point, Qa = Qab/(1-t1) + Qf
+    # The pole at t1 = 1 cancels
+    Qf_bar = Qf(1/t1, 1/t2, 1/t3)
+    Qab_bar = Qab(1/t1, 1/t2, 1/t3)
+    Va = Qf + (-Qf_bar + (1 - t2) * (1 - t3) *
+               (Qab * Qf_bar - t1 * Qab_bar * Qf
+                + (1 - t1) * Qf * Qf_bar)) / (t1 * t2 * t3)
+    return prod((s1 * i + s2 * j + s3 * k)^(-c)
+                for c, (i, j, k) in zip(Va.coefficients(),
+                                        Va.exponents()))
+    
+def check_macmahon_equiv(prec=6):
+    """ Check that DT = M(-q)^D """
+    R.<a,b,c> = QQ[]
+    P.<q> = R[[]]
+    D = -(a+b) * (a+c) * (b+c) / (a * b * c)
+    # Compute M(-q)^D = prod 1/(1-(-q)^k)^Dk using binomial series
+    predicted = prod(sum(binomial(-k * D, l) * (-(-q)^k)^l
+                         for l in range(prec)
+                         if l*k < prec)
+                     for k in range(prec)) + O(q^prec)
+    actual = DT([], (), (a,b,c), prec)
+    return predicted == actual
+    
+def check_pt_1(prec=10):
+    """ Check PT([1]) == (1+q)^((s2+s3)/s1) """
+    R.<a,b,c> = QQ[]
+    P.<q> = R[[]]
+    predicted = sum(binomial((b + c) / a, k) * q^k
+                    for k in range(prec)) + O(q^prec)
+    actual = PT([1], (), (a,b,c), prec)
+    return predicted == actual
+
+def check_ptdt(shape, prec=6):
+    """ Check PT == DTn """
+    R.<a,b,c> = QQ[]
+    return PT(shape, (), (a,b,c), prec) == DTn(shape, (), (a,b,c), prec)
