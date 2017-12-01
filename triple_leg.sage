@@ -1,9 +1,9 @@
 # 3-variable polynomial ring
 P.<x,y,z> = QQ[]
-# Power series ring
-PS.<q> = QQ[[]]
 # Quotient, used for chern character generating series
 Q = P.quotient(x * y * z - 1)
+# Power series ring, with coefficients in Q
+PS.<q> = Q[[]]
 
 # Get the smallest monomial ideal with the given localizations
 def minimal_ideal(px, py, pz):
@@ -50,9 +50,23 @@ def add_at_corner(G, g):
         G.append(g * z)
     return frozenset(G)
 
-# Given the shapes for the legs at infinity, calculate the non-normalized DT vertex
+# Just a matter of inclusion/exclusion
+def chern_char(G):
+    # Pass to quotient ring Q, since we're working without EVM
+    return Q(sum(G)
+             - sum(lcm(gi, gj)
+                   for i, gi in enumerate(G)
+                   for j, gj in enumerate(G)
+                   if i < j)
+             + sum(lcm(gi, lcm(gj, gk))
+                   for i, gi in enumerate(G)
+                   for j, gj in enumerate(G)
+                   for k, gk in enumerate(G)
+                   if i < j and j < k))
+
+# Given the shapes for the legs at infinity, calculate the
+# non-normalized DT vertex
 def vertex_series(px,py,pz, prec=5):
-    PS.<q> = QQ[[]]
     # Work directly with the generators, since sages's implementation
     # of ideals doesn't work well in a set/hashmap
     I = minimal_ideal(px,py,pz)
@@ -61,5 +75,5 @@ def vertex_series(px,py,pz, prec=5):
     W = (-q)^l
     for k in range(l+1, prec):
         S = { add_at_corner(G, g) for G in S for g in G }
-        W += len(S) * (-q)^k
+        W += sum(chern_char(G) for G in S) * (-q)^k
     return W + O(q^prec)
