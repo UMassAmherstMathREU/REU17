@@ -53,7 +53,7 @@ def add_at_corner(G, g):
 # Just a matter of inclusion/exclusion
 def chern_char(G):
     # Pass to quotient ring Q, since we're working without EVM
-    return Q(sum(G)
+    return P(sum(G)
              - sum(lcm(gi, gj)
                    for i, gi in enumerate(G)
                    for j, gj in enumerate(G)
@@ -64,16 +64,36 @@ def chern_char(G):
                    for k, gk in enumerate(G)
                    if i < j and j < k))
 
+def poincare_poly2(partition, var1, var2):
+    return (sum(var1^a * var2^b for (a,b) in partition.outside_corners())
+            - sum(var1^a * var2^b for (a,b) in partition.inside_corners())
+            + 0 * var1 * var2) # hack to make sure it's the right ring
+
+# G - list of generators for monomial ideal
+# legs = [l1,l2,l3] - lists of generators for the 3 legs
+def equiv_vertex_measure(G, legs):
+    R.<t1,t2,t3> = LaurentPolynomialRing(QQ)
+    Pa = -R(chern_char(G)(t1,t2,t3))
+    # I think it's important that this is oriented the same way as above
+    Pab1 = poincare_poly2(legs[0], t2, t3)
+    Pab2 = poincare_poly2(legs[1], t1, t3)
+    Pab3 = poincare_poly2(legs[2], t1, t2)
+    
+    f = lambda p : p(t1, t2, t3) * p(t1^(-1),t2^(-1),t3^(-1))
+    numer =  -2 - f(Pa) + f(Pab1) + f(Pab2) + f(Pab3)
+    return numer
+
 # Given the shapes for the legs at infinity, calculate the
 # non-normalized DT vertex
-def vertex_series(px,py,pz, prec=5):
+def vertex_series(px,py,pz, num_terms=5):
     # Work directly with the generators, since sages's implementation
     # of ideals doesn't work well in a set/hashmap
+    legs = [px, py, pz]
     I = minimal_ideal(px,py,pz)
     l = normalized_length(I)
     S = { frozenset(I.interreduced_basis()) }
     W = (-q)^l
-    for k in range(l+1, prec):
+    for k in range(l+1, l+1+num_terms):
         S = { add_at_corner(G, g) for G in S for g in G }
-        W += sum(chern_char(G) for G in S) * (-q)^k
+        W += sum(equiv_vertex_measure(G, legs) * chern_char(G) for G in S) * (-q)^k
     return W + O(q^prec)
