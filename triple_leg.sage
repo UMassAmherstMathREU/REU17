@@ -39,6 +39,37 @@ def normalized_length(I):
                      if x^a * y^b * z^zd not in I)
     return count - xcyl_count - ycyl_count - zcyl_count
 
+def multiplicity_of_box(i, j, k, ileg, jleg, kleg):
+    m = 0
+    if (j, k) in ileg.cells():
+        m += 1
+    if (i, k) in jleg.cells():
+        m += 1
+    if (i, j) in kleg.cells():
+        m += 1
+    return 1 - m if m >= 1 else 0
+
+# When added to the infinite legs, this should give the generating function
+# for the plane partition defined by I
+def finite_base(I, px, py, pz):
+    px = Partition(px)
+    py = Partition(py)
+    pz = Partition(pz)
+
+    xd = max(g.degree(x) for g in I.gens())
+    yd = max(g.degree(y) for g in I.gens())
+    zd = max(g.degree(z) for g in I.gens())
+
+    return sum(multiplicity_of_box(i, j, k, px, py, pz) * x^i * y^j * z^k
+               for i in range(xd)
+               for j in range(yd)
+               for k in range(zd))
+
+def check_length_agrees(px, py, pz):
+    I = minimal_ideal(px, py, pz)
+    f = finite_base(I, px, py, pz)
+    return f(1,1,1) == normalized_length(I)
+
 def add_at_corner(G, g):
     G = [f for f in G if f != g]
     Irem = P.ideal(G)
@@ -69,31 +100,34 @@ def poincare_poly2(partition, var1, var2):
             - sum(var1^a * var2^b for (a,b) in partition.inside_corners())
             + 0 * var1 * var2) # hack to make sure it's the right ring
 
-# G - list of generators for monomial ideal
+# f - finite part of Qa
 # legs = [l1,l2,l3] - lists of generators for the 3 legs
-def equiv_vertex_measure(G, legs):
-    R.<t1,t2,t3> = LaurentPolynomialRing(QQ)
-    Pa = -R(chern_char(G)(t1,t2,t3))
-    # I think it's important that this is oriented the same way as above
-    Pab1 = poincare_poly2(legs[0], t2, t3)
-    Pab2 = poincare_poly2(legs[1], t1, t3)
-    Pab3 = poincare_poly2(legs[2], t1, t2)
+def equiv_vertex_measure(f, legs):
     
-    f = lambda p : p(t1, t2, t3) * p(t1^(-1),t2^(-1),t3^(-1))
-    numer =  -2 - f(Pa) + f(Pab1) + f(Pab2) + f(Pab3)
-    return numer
 
 # Given the shapes for the legs at infinity, calculate the
 # non-normalized DT vertex
 def vertex_series(px,py,pz, num_terms=5):
     # Work directly with the generators, since sages's implementation
     # of ideals doesn't work well in a set/hashmap
+    px = Partition(px)
+    py = Partition(py)
+    pz = Partition(pz)
+
     legs = [px, py, pz]
     I = minimal_ideal(px,py,pz)
     l = normalized_length(I)
-    S = { frozenset(I.interreduced_basis()) }
+    S = { (frozenset(I.interreduced_basis()), finite_base(I, px, py, pz)) }
     W = (-q)^l
     for k in range(l+1, l+1+num_terms):
-        S = { add_at_corner(G, g) for G in S for g in G }
-        W += sum(equiv_vertex_measure(G, legs) * chern_char(G) for G in S) * (-q)^k
+        S = { (add_at_corner(G, g), f + g) for (G, f) in S for g in G }
+        W += sum(equiv_vertex_measure(f, legs) * chern_char(G) for (G, f) in S) * (-q)^k
     return W + O(q^prec)
+
+def check_minimal(px,py,pz):
+    px = Partition(px)
+    py = Partition(py)
+    pz = Partition(pz)
+    I = minimal_ideal(px,py,pz)
+    G = I.interreduced_basis()
+    return equiv_vertex_measure(G, [px,py,pz])
