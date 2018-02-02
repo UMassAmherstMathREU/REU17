@@ -79,20 +79,27 @@ def add_at_corner(G, g):
         G.append(g * s3)
     return frozenset(G)
 
-# Just a matter of inclusion/exclusion
-# Something is very broken here.
-def chern_char(F, prec=10):
+def chern_char(F, coeff, params):
+    print "bar"
     g = (1 - (1 - s1) * (1 - s2) * (1 - s3) * F)
-    return g((s1 * z).exp(prec), (s2 * z).exp(prec), (s3 * z).exp(prec))
+    # Composing power series is SLOW
+    # We can avoid doing this if we don't expand e^(si * z)
+    # But I think we have to if s1 + s2 + s3 != 0
+    prec = coeff + 1
+    R.<z> = parent(sum(params))[[]]
+    print "foo"
+    expanded = g([(t * z).exp(prec) for t in params])
+    r = expanded[coeff]
+    print parent(r)
+    return r
 
-def poincare_poly2(partition, var1, var2):
-    return (sum(var1^a * var2^b for (a,b) in partition.outside_corners())
-            - sum(var1^a * var2^b for (a,b) in partition.inside_corners())
-            + 0 * var1 * var2) # hack to make sure it's the right ring
+def multiple_chern_char(F, insertions, params):
+    return prod(chern_char(F, k, params) for k in insertions)
 
 # f - finite part of Qa
 # legs = [l1,l2,l3] - lists of generators for the 3 legs
-def equiv_vertex_measure(f, legs):
+def equiv_vertex_measure(f, legs, params=(s1,s2,s3)):
+    print "Start evm"
     LP.<t1, t2, t3> = LaurentPolynomialRing(ZZ)
     t = [t1, t2, t3]
     F = P(f)(t1, t2, t3)
@@ -111,40 +118,60 @@ def equiv_vertex_measure(f, legs):
          - sum(L[i] * bar(L[j]) * (1 - t[k]) / (t[i] * t[k])
                for i in range(3) for j in range(3) for k in range(3)
                if i != j and i != k and j != k))
-    return prod((i * s1 + j * s2 + k * s3)^(-V[i,j,k])
+    print "Almost done with evm"
+    return prod((i * params[0] + j * params[1] + k * params[2])^(-V[i,j,k])
                 for (i, j, k) in V.exponents())
 
 # Given the shapes for the legs at infinity, calculate the
 # non-normalized DT vertex
-def vertex_series(px,py,pz, num_terms=5, num_insertions=10):
+def vertex_series(px,py,pz, num_terms=5, insertions=(), params=(s1,s2,s3)):
     # Work directly with the generators, since sages's implementation
     # of ideals doesn't work well in a set/hashmap
     px = Partition(px)
     py = Partition(py)
     pz = Partition(pz)
 
+    R.<q> = parent(sum(params))[[]]
+
     legs = [px, py, pz]
     I = minimal_ideal(px,py,pz)
     l = normalized_length(I)
     S = { (frozenset(I.interreduced_basis()), finite_base(I, px, py, pz)) }
     W = q^l
-    for k in range(l+1, l+1+num_terms):
+    for k in range(l+1, l+num_terms):
         S = { (add_at_corner(G, g), f + g) for (G, f) in S for g in G }
-        W += sum(equiv_vertex_measure(f, legs) * chern_char(f, num_insertions)
+        W += sum(equiv_vertex_measure(f, legs, params) * multiple_chern_char(f, insertions, params)
                  for (G, f) in S) * q^k
-    return W + O(q^(l+1+num_terms))
+    return W + O(q^(l+num_terms))
 
-def check_macmahon_equiv(prec=6):
+def check_macmahon_equiv(prec=6, params=(s1,s2,s3)):
     """ Check that DT = M(-q)^D """
-    D = -(s1+s2) * (s1+s3) * (s2+s3) / (s1 * s2 * s3)
+    a, b, c = params
+    D = -(a + b) * (a + c) * (b + c) / (a * b * c)
     # Compute M(-q)^D = prod 1/(1-(-q)^k)^Dk using binomial series
+    print "Computing predicted result"
     predicted = prod(sum(binomial(-k * D, l) * (-(-q)^k)^l
                          for l in range(prec)
                          if l*k < prec)
                      for k in range(prec)) + O(q^prec)
-    actual = vertex_series([], [], [], prec, 1)
+    print "Computing actual result"
+    actual = vertex_series([], [], [], prec, (), params)
     #print "predicted = {}".format(predicted)
     #print "actual = {}".format(actual)
+    return predicted == actual
+
+def check_1_box(prec=6, params=(s1,s2,s3)):
+    a,b,c = params
+    D = -(a + b) * (a + c) * (b + c) / (a * b * c)
+    C = (b + c) / a
+    M = prod(sum(binomial(-k * D, l) * (-(-q)^k)^l
+                 for l in range(prec)
+                 if l*k < prec)
+             for k in range(prec)) + O(q^prec)
+    N = sum(binomial(C, k) * q^k
+            for k in range(prec)) + O(q^prec)
+    predicted = N * M
+    actual = vertex_series([1], [], [], prec, (), params)
     return predicted == actual
 
 def check_minimal(px,py,pz):
