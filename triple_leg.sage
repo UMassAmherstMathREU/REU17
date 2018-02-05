@@ -58,7 +58,7 @@ def finite_base(I, px, py, pz):
     yd = max(g.degree(s2) for g in I.gens())
     zd = max(g.degree(s3) for g in I.gens())
 
-    return sum(multiplicity_of_box(i, j, k, px, py, pz) * x^i * y^j * z^k
+    return sum(multiplicity_of_box(i, j, k, px, py, pz) * s1^i * s2^j * s3^k
                for i in range(xd)
                for j in range(yd)
                for k in range(zd))
@@ -131,13 +131,15 @@ def vertex_series(px,py,pz, num_terms=5, insertions=(), params=(s1,s2,s3)):
     py = Partition(py)
     pz = Partition(pz)
 
-    R.<q> = parent(sum(params))[[]]
+    R.<q> = LaurentSeriesRing(Frac(parent(sum(params))))
 
     legs = [px, py, pz]
     I = minimal_ideal(px,py,pz)
     l = normalized_length(I)
-    S = { (frozenset(I.interreduced_basis()), finite_base(I, px, py, pz)) }
-    W = q^l
+    Gstart = frozenset(I.interreduced_basis())
+    fstart = finite_base(I, px, py, pz)
+    S = { (Gstart, fstart) }
+    W = q^l * equiv_vertex_measure(fstart, legs, params) * multiple_chern_char(fstart, insertions, params)
     for k in range(l+1, l+num_terms):
         S = { (add_at_corner(G, g), f + g) for (G, f) in S for g in G }
         W += sum(equiv_vertex_measure(f, legs, params) * multiple_chern_char(f, insertions, params)
