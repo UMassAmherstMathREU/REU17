@@ -80,17 +80,14 @@ def add_at_corner(G, g):
     return frozenset(G)
 
 def chern_char(F, coeff, params):
-    print "bar"
     g = (1 - (1 - s1) * (1 - s2) * (1 - s3) * F)
     # Composing power series is SLOW
     # We can avoid doing this if we don't expand e^(si * z)
     # But I think we have to if s1 + s2 + s3 != 0
     prec = coeff + 1
-    R.<z> = parent(sum(params))[[]]
-    print "foo"
+    R.<z> = Frac(parent(sum(params)))[[]]
     expanded = g([(t * z).exp(prec) for t in params])
     r = expanded[coeff]
-    print parent(r)
     return r
 
 def multiple_chern_char(F, insertions, params):
@@ -99,8 +96,7 @@ def multiple_chern_char(F, insertions, params):
 # f - finite part of Qa
 # legs = [l1,l2,l3] - lists of generators for the 3 legs
 def equiv_vertex_measure(f, legs, params=(s1,s2,s3)):
-    print "Start evm"
-    LP.<t1, t2, t3> = LaurentPolynomialRing(ZZ)
+    LP.<t1, t2, t3> = LaurentPolynomialRing(QQ)
     t = [t1, t2, t3]
     F = P(f)(t1, t2, t3)
     L = [sum(t2^a * t3^b for (a, b) in legs[0].cells()),
@@ -109,7 +105,6 @@ def equiv_vertex_measure(f, legs, params=(s1,s2,s3)):
     bar = lambda a: LP(a)(1/t1, 1/t2, 1/t3)
     # After doing the cancellation with the infinite parts,
     # this is what's left
-    print "F = {}".format(F)
     V = (F - (bar(F) - F * bar(F) * (1-t1) * (1-t2) * (1-t3)) / (t1 * t2 * t3)
          + sum((L[i] * bar(F) - t[i] * F * bar(L[i]))
                * (1 - t[j]) * (1 - t[k]) / (t1 * t2 * t3)
@@ -118,7 +113,6 @@ def equiv_vertex_measure(f, legs, params=(s1,s2,s3)):
          - sum(L[i] * bar(L[j]) * (1 - t[k]) / (t[i] * t[k])
                for i in range(3) for j in range(3) for k in range(3)
                if i != j and i != k and j != k))
-    print "Almost done with evm"
     return prod((i * params[0] + j * params[1] + k * params[2])^(-V[i,j,k])
                 for (i, j, k) in V.exponents())
 

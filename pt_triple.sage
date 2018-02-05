@@ -37,7 +37,17 @@ class LabelledBoxConfiguration(ClonableElement):
         assert (label >= 0 and label < len(self._labels),
                 "%s is not the index of any label" % label)
         value = self._labels[value]
-        return value == gen
+        return gen is not None and value == gen
+
+    def _has_matching_label_or_filled_if_valid(i, j, k, lab):
+        if not _is_valid_box(i, j, k):
+            return True
+        if (i, j, k) not in self._boxes:
+            return False
+        label = self._boxes[(i, j, k)]
+        if label == -1:
+            return True
+        return label == lab
 
     def check():
         """Verify that this object defines a valid box configuration.
@@ -50,71 +60,35 @@ class LabelledBoxConfiguration(ClonableElement):
             assert all(l in ZZ for l in (i, j, k)), "Box coordinates must be integers"
             assert _is_valid_box(i, j, k), "%s is not a valid box" % ((i, j, k),)
             box_type = _box_type(i, j, k)
-            # TODO: fix up these rules.  Simplify how we check neighbors to make it shorter.
-            if box_type == 1:
-                assert (self._boxes[(i, j, k)] == -1,
-                        "%s is type I and should have no label" % ((i, j, k),))
-                assert (_is_filled_if_valid(i + 1, j, k),
-                        "%s is filled but %s is not" % ((i, j, k), (i + 1, j, k)))
-                assert (_is_filled_if_valid(i, j + 1, k)
-                        "%s is filled but %s is not" % ((i, j, k), (i, j + 1, k)))
-                assert ((i, j, k + 1) in self._boxes
-                        or (j, k + 1) not in self._parent.leg(0).cells(),
-                        "%s is filled but %s is not" % ((i, j, k), (i, j, k + 1)))
-                assert (self._boxes[(i + 1, j, k)] == -1
-                        or self._labels[self._boxes[(i + 1, j, l)]] == 0,
-                        "%s is filled but %s has a different label" % ((i, j, k), (i + 1, j, k)))
+            
+            if i < 0:
+                gen = 0
             elif j < 0:
-                assert (self._boxes[(i, j, k)] == -1,
-                        "%s is type I and should have no label" % (i, j, k))
-                assert ((i, k) in self._parent.leg(1).cells(),
-                        "%s is not a valid box" % (i, j, k))
-                assert ((i, j + 1, k) in self._boxes
-                        or j == -1 and (0, k) not in self._parent.leg(0).cells()
-                        or j == -1 and (i, 0) not in self._parent.leg(2).cells(),
-                        "%s is filled but %s is not" % ((i, j, k), (i, j + 1, k)))
-                assert ((i + 1, j, k) in self._boxes
-                        or (i + 1, k) not in self._parent.leg(1).cells(),
-                        "%s is filled but %s is not" % ((i, j, k), (i + 1, j, k)))
-                assert ((i, j, k + 1) in self._boxes
-                        or (i, k + 1) not in self._parent.leg(0).cells(),
-                        "%s is filled but %s is not" % ((i, j, k), (i, j, k + 1)))
-                assert (self._boxes[(i, j + 1, k)] == -1
-                        or self._labels[self._boxes[(i, j + 1, l)]] == 1,
-                        "%s is filled but %s has a different label" % ((i, j, k), (i, j + 1, k)))
+                gen = 1
             elif k < 0:
-                assert (self._boxes[(i, j, k)] == -1,
-                        "%s is type I and should have no label" % (i, j, k))
-                assert ((i, j) in self._parent.leg(2).cells(),
-                        "%s is not a valid box" % (i, j, k))
-                assert ((i, j, k + 1) in self._boxes
-                        or k == -1 and (j, 0) not in self._parent.leg(0).cells()
-                        or k == -1 and (i, 0) not in self._parent.leg(1).cells(),
-                        "%s is filled but %s is not" % ((i, j, k), (i, j, k + 1)))
-                assert ((i + 1, j, k) in self._boxes
-                        or (i + 1, j) not in self._parent.leg(2).cells(),
-                        "%s is filled but %s is not" % ((i, j, k), (i + 1, j, k)))
-                assert ((i, j + 1, k) in self._boxes
-                        or (i, j + 1) not in self._parent.leg(2).cells(),
-                        "%s is filled but %s is not" % ((i, j, k), (i, j + 1, k)))
-                assert (self._boxes[(i, j, k + 1)] == -1
-                        or self._labels[self._boxes[(i, j, k + 1)]] == 2,
-                        "%s is filled but %s has a different label" % ((i, j, k), (i, j, k + 1)))
+                gen = 2
             else:
-                # All co-ordinates are positive, so we're either II or III
-                # Count the number of inclusions
-                box_type = sum(1 for p in [(j, k) in self._parent.leg(0).cells(),
-                                           (i, k) in self._parent.leg(1).cells(),
-                                           (i, j) in self._parent.leg(2).cells()]
-                               if p)
-                assert box_type == 2 or box_type == 3, "%s is not a valid box" % (i, j, k)
-
-                if box_type == 2:
-                    assert (self._boxes[(i, j, k)] == -1,
-                            "%s is type II and should have no label" % (i, j, k))
-                    assert ((i 
-                else:
-                    pass
+                gen = None
+            
+            if box_type == 1 or box_type == 2:
+                assert (self._boxes[(i, j, k)] == -1,
+                        "%s is type I or II and should have no label" % ((i, j, k),))
+                assert (_is_filled_if_valid(i + 1, j, k, gen),
+                        "%s is filled but %s is not" % ((i, j, k), (i + 1, j, k)))
+                assert (_is_filled_if_valid(i, j + 1, k, gen)
+                        "%s is filled but %s is not" % ((i, j, k), (i, j + 1, k)))
+                assert (_is_filled_if_valid(i, j, k + 1, gen)
+                        "%s is filled but %s is not" % ((i, j, k), (i, j, k + 1))) 
+            else:
+                label = self._boxes[(i, j, k)]
+                assert (label >= 0 and label < len(self._lables),
+                        "%s is not the index of any label" % label)
+                assert (_has_matching_label_or_filled_if_valid(i + 1, j, k, label),
+                        "%s and %s do not have matching labels" % ((i, j, k), (i + 1, j, k)))
+                assert (_has_matching_label_or_filled_if_valid(i, j + 1, k, label),
+                        "%s and %s do not have matching labels" % ((i, j, k), (i, j + 1, k)))
+                assert (_has_matching_label_or_filled_if_valid(i, j, k + 1, label),
+                        "%s and %s do not have matching labels" % ((i, j, k), (i, j, k + 1)))
 
 class LabelledBoxConfigurations(Parent):
     Element = LabelledBoxConfiguration
