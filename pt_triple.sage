@@ -1,3 +1,5 @@
+from sage.structure.list_clone import ClonableElement
+
 class LabelledBoxConfiguration(ClonableElement):
     def __init__(self, leg1, leg2, leg3, boxes = None, labels = None, check = True):
         self._parent = LabelledBoxConfigurations(leg1, leg2, leg3)
@@ -6,6 +8,7 @@ class LabelledBoxConfiguration(ClonableElement):
         self._is_immutable = True
         if check:
             self.check()
+        ClonableElement.__init__(self, self._parent)
 
     def __copy__():
         t = type(self)
@@ -34,8 +37,8 @@ class LabelledBoxConfiguration(ClonableElement):
         label = self._boxes[(i, j, k)]
         if label == -1:
             return True
-        assert (label >= 0 and label < len(self._labels),
-                "%s is not the index of any label" % label)
+        assert label >= 0 and label < len(self._labels), \
+            "%s is not the index of any label" % label
         value = self._labels[value]
         return gen is not None and value == gen
 
@@ -45,17 +48,26 @@ class LabelledBoxConfiguration(ClonableElement):
         if (i, j, k) not in self._boxes:
             return False
         label = self._boxes[(i, j, k)]
-        if label == -1:
+        if label == -1 or label == lab:
             return True
-        return label == lab
+        if lab == -1:
+            return False
+        # If we got this far, (i, j, k) is type II
+        # check that (i, j, k) is not in Cyl_value
+        value = self._labels[lab]
+        return (i, j, k) not in self._parent.leg(value).cells()
 
-    def check():
+    def check(self):
         """Verify that this object defines a valid box configuration.
 
         The rules for a valid box configuration are defined in section
         2.5 of [PT2008], starting on page 12.
 
         """
+        for label in self._labels:
+            assert label in ZZ, "%s is not an integer and cannot be a label" % label
+            assert label >= -1, "%s is not a valid label" % label
+
         for (i, j, k) in self._boxes:
             assert all(l in ZZ for l in (i, j, k)), "Box coordinates must be integers"
             assert _is_valid_box(i, j, k), "%s is not a valid box" % ((i, j, k),)
@@ -71,28 +83,42 @@ class LabelledBoxConfiguration(ClonableElement):
                 gen = None
             
             if box_type == 1 or box_type == 2:
-                assert (self._boxes[(i, j, k)] == -1,
-                        "%s is type I or II and should have no label" % ((i, j, k),))
-                assert (_is_filled_if_valid(i + 1, j, k, gen),
-                        "%s is filled but %s is not" % ((i, j, k), (i + 1, j, k)))
-                assert (_is_filled_if_valid(i, j + 1, k, gen)
-                        "%s is filled but %s is not" % ((i, j, k), (i, j + 1, k)))
-                assert (_is_filled_if_valid(i, j, k + 1, gen)
-                        "%s is filled but %s is not" % ((i, j, k), (i, j, k + 1))) 
+                assert self._boxes[(i, j, k)] == -1, \
+                    "%s is type I or II and should have no label" % ((i, j, k),)
+                assert _is_filled_if_valid(i + 1, j, k, gen), \
+                    "%s is filled but %s is not" % ((i, j, k), (i + 1, j, k))
+                assert _is_filled_if_valid(i, j + 1, k, gen), \
+                    "%s is filled but %s is not" % ((i, j, k), (i, j + 1, k))
+                assert _is_filled_if_valid(i, j, k + 1, gen), \
+                    "%s is filled but %s is not" % ((i, j, k), (i, j, k + 1))
             else:
                 label = self._boxes[(i, j, k)]
-                assert (label >= 0 and label < len(self._lables),
-                        "%s is not the index of any label" % label)
-                assert (_has_matching_label_or_filled_if_valid(i + 1, j, k, label),
-                        "%s and %s do not have matching labels" % ((i, j, k), (i + 1, j, k)))
-                assert (_has_matching_label_or_filled_if_valid(i, j + 1, k, label),
-                        "%s and %s do not have matching labels" % ((i, j, k), (i, j + 1, k)))
-                assert (_has_matching_label_or_filled_if_valid(i, j, k + 1, label),
-                        "%s and %s do not have matching labels" % ((i, j, k), (i, j, k + 1)))
+                assert label >= -1 and label < len(self._lables), \
+                    "%s is not the index of any label" % label
+                assert _has_matching_label_or_filled_if_valid(i + 1, j, k, label), \
+                    "%s and %s do not have matching labels" % ((i, j, k), (i + 1, j, k))
+                assert _has_matching_label_or_filled_if_valid(i, j + 1, k, label), \
+                    "%s and %s do not have matching labels" % ((i, j, k), (i, j + 1, k))
+                assert _has_matching_label_or_filled_if_valid(i, j, k + 1, label), \
+                    "%s and %s do not have matching labels" % ((i, j, k), (i, j, k + 1))
+
+    def length(self):
+        return sum(2 if _box_type(i, j, k) == 3 and self._boxes[(i, j, k)] == -1 else 1
+                   for (i, j, k) in self._boxes)
+                                                         
+    def _repr_(self):
+        return "Labelled box configuration of length %s with outgoing partitions %s" \
+            % (self.length(), self._parent.legs())
 
 class LabelledBoxConfigurations(Parent):
     Element = LabelledBoxConfiguration
 
     def __init__(self, leg1, leg2, leg3):
-        self.legs = tuple(Partition(leg) for leg in [leg1, leg2, leg3])
+        self._legs = tuple(Partition(leg) for leg in [leg1, leg2, leg3])
         Parent.__init__(self, category=Sets())
+
+    def legs(self):
+        return self._legs
+
+    def leg(self, i):
+        return self._legs[i]
