@@ -86,7 +86,7 @@ def chern_char(F, coeff, params):
     # But I think we have to if s1 + s2 + s3 != 0
     prec = coeff + 1
     R.<z> = Frac(parent(sum(params)))[[]]
-    expanded = g([(t * z).exp(prec) for t in params])
+    expanded = R(g([(t * z).exp(prec) for t in params]))
     r = expanded[coeff]
     return r
 
