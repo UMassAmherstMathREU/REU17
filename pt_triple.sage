@@ -2,52 +2,103 @@ from sage.structure.list_clone import ClonableElement
 from sage.structure.unique_representation import CachedRepresentation
 from collections import deque
 
+def cy_pt_vertex_series(mu1, mu2, mu3, prec=5):
+    """Compute the Calibi-Yau vertex.
+
+    This computes the series \(W^P_{\vec \mu} |_{s_1+s_2+s_3=0}\),
+    using the conjectured equation (5.3) in [PT2008].
+
+    The arguments mu1,mu2,mu3 are iterables defining the outgoing
+    partitions.  The argument prec determines the number of terms to
+    compute.
+
+    """
+
+    R.<q> = LaurentSeriesRing(ZZ)
+    cfgs = LabelledBoxConfigurations(mu1, mu2, mu3)
+    v = cfgs.renormalized_volume()
+    # If I understand correctly:
+    # We need the euler characteristic of (P^1)^n, which is 2^n
+    return sum(2^p.unrestricted_components() * (-q)^(p.length() + v)
+               for p in cfgs.up_to_size_n(prec - 1)) + O(q^(prec + v))
+    
+    
+
+### Helper functions used internally
+
+def higher_boxes(w):
+    return [tuple(w[j] + 1 if i == j else w[j] for j in range(3))
+            for i in range(3)]
+
+def lower_boxes(w):
+    return [tuple(w[j] - 1 if i == j else w[j] for j in range(3))
+            for i in range(3)]
+
+def adjacent_boxes(w):
+    return higher_boxes(w) + lower_boxes(w)
+
+def remove_nth(w, n):
+    w = list(w)
+    del w[n]
+    return tuple(w)
+
 class LabelledBoxConfiguration(ClonableElement):
+
+    """Class to represent a labelled box configuration.
+
+    Internally, (0,1,2) represent labels fixed in each direction, and
+    3 represents a "free label", and -1 represents represents a
+    supported box with no label.
+
+    """
+    
     def __init__(self, leg1, leg2, leg3, boxes = None, labels = None, check = True):
+        """Create a new labelled box configuration with specified data.
+
+        """
         self._parent = LabelledBoxConfigurations(leg1, leg2, leg3)
         self._boxes = dict(boxes) if boxes is not None else dict()
-        self._labels = list(labels) if labels is not None else list()
         self._is_immutable = True
         if check:
             self.check()
         ClonableElement.__init__(self, self._parent)
 
     def __copy__(self):
+        """Create a copy of this box configuration.
+
+        """
         t = type(self)
         result = t.__new__(t)
         result._parent = self._parent
         result._boxes = dict(self._boxes)
-        result._labels = list(self._labels)
         return result
 
-    def _is_filled_if_valid(self, i, j, k, gen):
-        if not self._parent.is_valid_box(i, j, k):
-            return True
-        if (i, j, k) not in self._boxes:
-            return False
-        label = self._boxes[(i, j, k)]
-        if label == -1:
-            return True
-        assert label >= 0 and label < len(self._labels), \
-            "%s is not the index of any label" % label
-        value = self._labels[label]
-        return gen is not None and value == gen
+    def _is_filled_if_valid(self, w, gen = -1):
+        """Check if the box at w contains the subspace induced by gen.
 
-    def _has_matching_label_or_filled_if_valid(self, i, j, k, lab):
-        if not self._parent.is_valid_box(i, j, k):
+        More precisely, check that \(x_1^i x_2^j x_3^k \cdot
+        \mathbf{gen}_0\) where \(w = (i,j,k)\) is in the corresponding
+        module.  If (i,j,k) is an invalid location, this product is
+        \(0\) and we always return true.
+
+        If gen is -1, then check if (i,j,k) is supported by an
+        unlabelled box, or is not a valid location for a box.
+
+        If gen is 0, 1, or 2, then check that (i,j,k) is either
+        unlabelled, labelled by gen, is a type II box not in the
+        cylinder corresponding to gen, or is not a valid location for a box.
+
+        If gen is 3, then check that (i,j,k) is unlabelled, contains
+        an unrestricted label, or is not a valid location for a box.
+
+        """
+        if not self._parent.is_valid_box(*w):
             return True
-        value = self._labels[lab]
-        # If child is type II and independent from us, return true
-        if (value == 0 and (j, k) not in self._parent.leg(0).cells() or
-            value == 1 and (i, k) not in self._parent.leg(1).cells() or
-            value == 2 and (i, j) not in self._parent.leg(2).cells()):
+        if w in self._boxes and self._boxes[w] in (-1, gen):
             return True
-        # Otherwise, there had better be a box there
-        if (i, j, k) not in self._boxes:
-            return False
-        # The child must be filled or matching
-        label = self._boxes[(i, j, k)]
-        return label == -1 or label == lab
+        if gen in (0,1,2) and remove_nth(w, gen) not in self._parent.leg(gen).cells():
+            return True
+        return False
 
     def check(self):
         """Verify that this object defines a valid box configuration.
@@ -65,43 +116,23 @@ class LabelledBoxConfiguration(ClonableElement):
         unrestricted components, and possibly removing unused labels,
         to which this configuration will compare equal.
         """
-        for label in self._labels:
-            assert label in ZZ, "%s is not an integer and cannot be a label" % label
-            assert label >= -1 and label <= 2, "%s is not a valid label" % label
-
-        for (i, j, k) in self._boxes:
-            assert all(l in ZZ for l in (i, j, k)), "Box coordinates must be integers"
-            assert self._parent.is_valid_box(i, j, k), "%s is not a valid box" % ((i, j, k),)
-            box_type = self._parent.box_type(i, j, k)
-
-            if i < 0:
-                gen = 0
-            elif j < 0:
-                gen = 1
-            elif k < 0:
-                gen = 2
-            else:
-                gen = None
+        for w in self._boxes:
+            assert all(l in ZZ for l in w), "Box coordinates must be integers"
+            assert self._parent.is_valid_box(*w), "%s is not a valid box" % (w,)
+            box_type = self._parent.box_type(*w)
 
             if box_type == 1 or box_type == 2:
-                assert self._boxes[(i, j, k)] == -1, \
-                    "%s is type I or II and should have no label" % ((i, j, k),)
-                assert self._is_filled_if_valid(i + 1, j, k, gen), \
-                    "%s is filled but %s is not" % ((i, j, k), (i + 1, j, k))
-                assert self._is_filled_if_valid(i, j + 1, k, gen), \
-                    "%s is filled but %s is not" % ((i, j, k), (i, j + 1, k))
-                assert self._is_filled_if_valid(i, j, k + 1, gen), \
-                    "%s is filled but %s is not" % ((i, j, k), (i, j, k + 1))
+                assert self._boxes[w] == -1, \
+                    "%s is type I or II and should have no label" % (w,)
+
+            if box_type == 1:
+                gen = [i < 0 for i in w].index(True)
             else:
-                label = self._boxes[(i, j, k)]
-                assert label >= -1 and label < len(self._labels), \
-                    "%s is not the index of any label" % label
-                assert self._has_matching_label_or_filled_if_valid(i + 1, j, k, label), \
-                    "%s is filled but %s is not, or has the wrong label" % ((i, j, k), (i + 1, j, k))
-                assert self._has_matching_label_or_filled_if_valid(i, j + 1, k, label), \
-                    "%s is filled but %s is not, or has the wrong label" % ((i, j, k), (i, j + 1, k))
-                assert self._has_matching_label_or_filled_if_valid(i, j, k + 1, label), \
-                    "%s is filled but %s is not, or has the wrong label" % ((i, j, k), (i, j, k + 1))
+                gen = self._boxes[w]
+            
+            for v in higher_boxes(w):
+                assert self._is_filled_if_valid(v, gen), \
+                    "%s is filled but %s is not" % (w, v)
 
     def length(self):
         """Return the length of the configuration.
@@ -110,8 +141,8 @@ class LabelledBoxConfiguration(ClonableElement):
         corresponds to the length of a submodule.
 
         """
-        return sum(2 if self._parent.box_type(i, j, k) == 3 and self._boxes[(i, j, k)] == -1 else 1
-                   for (i, j, k) in self._boxes)
+        return sum(2 if self._parent.box_type(*w) == 3 and self._boxes[w] == -1 else 1
+                   for w in self._boxes)
 
     def unrestricted_components(self):
         """Return the number of unrestricted components.
@@ -123,63 +154,77 @@ class LabelledBoxConfiguration(ClonableElement):
         submodules parameterized by $(\mathbb P^1)^n$.
 
         """
-        return sum(1 for i in self._labels if i == -1)
+        unvisited = {w for w in self._boxes
+                     if self._boxes[w] == 3}
+        to_visit = deque()
+        components = 0
+        while unvisited:
+            components += 1
+            w = iter(unvisited).next()
+            unvisited.remove(w)
+            to_visit.append(w)
+            while to_visit:
+                w = to_visit.pop()
+                for v in adjacent_boxes(w):
+                    if v in unvisited:
+                        unvisited.remove(v)
+                        to_visit.append(v)
+        return components
 
-    def fill_box(self, i, j, k):
+    def fill_box(self, w, value = -1):
+        """Update the value in a box.
+
+        By default, use an unlabelled box.
+
+        """
         self._require_mutable()
-        self._boxes[(i, j, k)] = -1
+        self._boxes[w] = value
 
-    def set_box_reference(self, i, j, k, label = None):
+    def force(self, w, lab):
+        """Force the value of a type III box and propogate changes.
+
+        If the box at w is an unrestricted label, fill it in with the
+        value of lab.  If it is empty, or unlabelled, do nothing.
+
+        """
         self._require_mutable()
-        if label is None:
-            self._labels.append(-1)
-            label = len(self._labels) - 1
-        self._boxes[(i, j, k)] = label
-        return label
+        if w in self._boxes:
+            if self._boxes[w] == 3:
+                self._boxes[w] = lab
+                for v in adjacent_boxes(w):
+                    self.force(v, lab)
 
-    def set_box_value(self, i, j, k, value):
+    def relax(self, w):
+        """Relax the value of a type III box to an unrestricted label.
+
+        Check the entire connected component of this box for any
+        external constraints from type I and II boxes, and then relax
+        if possible.
+
+        """
         self._require_mutable()
-        self._labels.append(value)
-        self._boxes[(i, j, k)] = len(self._labels) - 1
-
-    def propogate_labels(self, i, j, k):
-        self._require_mutable()
-        q = deque([(i + 1, j, k), (i, j + 1, k), (i, j, k + 1)])
-        label = self._boxes[(i, j, k)]
-        while q:
-            i, j, k = q.popleft()
-            if (i, j, k) not in self._boxes:
-                continue
-            if (i, j, k) in self._boxes and self._boxes[(i, j, k)] != -1 \
-               and self._boxes[(i, j, k)] != label:
-                self._boxes[(i, j, k)] = label
-                q.append((i + 1, j, k))
-                q.append((i, j + 1, k))
-                q.append((i, j, k + 1))
-
-    def _update_constraints(self, i, j, k, constraints, axis):
-        new_box = [i, j, k]
-        new_box[axis] += 1
-        new_box = tuple(new_box)
-        i, j, k = new_box
-
-        if new_box not in self._boxes:
-            t = self._parent.box_type(i, j, k)
-            if t == 3:
-                constraints[:] = [True, True, True]
-            if t == 2:
-                # Determine the box that the type II cell is not in
-                notin = [(j, k) in self._parent.leg(0).cells(),
-                         (i, k) in self._parent.leg(1).cells(),
-                         (i, j) in self._parent.leg(2).cells()].index(False)
-                constraints[notin] = True
-        elif self._boxes[new_box] != -1:
-            value = self._labels[self._boxes[(i, j, k)]]
-            if value != -1:
-                constraints[value] = True
+        component = set()
+        to_check = deque([w])
+        while to_check:
+            v = to_check.pop()
+            if v not in self._boxes:
+                if self._parent.box_type(*v) == 2:
+                    return
+            elif self._parent.box_type(*v) == 1:
+                return
+            elif self._boxes[v] == self._boxes[w]:
+                component.add(v)
+                for u in adjacent_boxes(v):
+                    if u not in component:
+                        to_check.append(u)
+        # If we made it this far, it's safe to convert the whole
+        # component
+        for v in component:
+            self._boxes[v] = 3
 
     def children(self):
-        """Find all possible configurations which can be obtained by adding a box
+        """Find all possible configurations which can be obtained by adding a
+        box
 
         More precisely, return a list of labelled box configurations
         which can be obtained from this one by one of the following
@@ -191,56 +236,69 @@ class LabelledBoxConfiguration(ClonableElement):
 
         """
         result = []
-        # Add a type I
-        # Add a type II
-        for (i, j, k) in self._parent.type_II_boxes():
-            if (i, j, k) not in self._boxes and \
-               self._is_filled_if_valid(i + 1, j, k, None) and \
-               self._is_filled_if_valid(i, j + 1, k, None) and \
-               self._is_filled_if_valid(i, j, k + 1, None):
-                with self.clone() as child:
-                    child.fill_box(i, j, k)
-                    # NEED TO RELAX LABELS IF POSSIBLE
-                    # This could get tricky with chain reaction stuff happening
-                    # Maybe just re-compute all type III labels on creating a new child?
-                result.append(child)
-        # Add a labelled type III
-        for (i, j, k) in self._parent.type_III_boxes():
-            if (i, j, k) not in self._boxes:
-                # We need to determine the possible labels at a given position
-                constraints = [False, False, False]
-                for axis in range(3):
-                    self._update_constraints(i, j, k, constraints, axis)
-                num_constraints = sum(1 for c in constraints if c)
-                if num_constraints == 0:
-                    # Add a free label (unrestricted component)
-                    with self.clone() as child:
-                        new_value = child.set_box_reference(i, j, k)
-                        to_replace = [child._boxes[box]
-                                      for box in [(i + 1, j, k), (i, j + 1, k), (i, j, k + 1)]
-                                      if box in child._boxes and child._boxes[box] != -1]
-                        for box in child._boxes:
-                            if child._boxes[box] in to_replace:
-                                child._boxes[box] = new_value
-                    result.append(child)
-                elif num_constraints == 1:
-                    # Add a labelled box with specified label
-                    c = constraints.index(True)
-                    with self.clone() as child:
-                        child.set_box_value(i, j, k, c)
-                        child.propogate_labels(i, j, k)
-                    result.append(child)
 
-        # Remove a label from a type III
-        for (i, j, k) in self._parent.type_III_boxes():
-            if (i, j, k) in self._boxes and self._boxes[(i, j, k)] != -1 and \
-               self._is_filled_if_valid(i + 1, j, k, None) and \
-               self._is_filled_if_valid(i, j + 1, k, None) and \
-               self._is_filled_if_valid(i, j, k + 1, None):
+        # Add a type I
+        for i in range(3):
+            for u in self._parent.leg(i).cells():
+                # Try to insert into the column corresponding to u in
+                # the ith leg
+                w = list(u)
+                w.insert(i, -1)
+                while tuple(w) in self._boxes:
+                    w[i] -= 1
+                w = tuple(w)
+                # We found a candidate spot for a new box
+                # Check if neighbors are unrestricted labels, or i-labels
+                if all(self._is_filled_if_valid(v, 3) or
+                       self._is_filled_if_valid(v, i)
+                       for v in higher_boxes(w)):
+                    with self.clone() as child:
+                        child.fill_box(w)
+                        # We may need to restrict an unrestricted label
+                        v = tuple(w[j] + 1 if j == i else w[j] for j in range(3))
+                        child.force(v, i)
+                    result.append(child)
+                    
+        # Add a type II
+        for w in self._parent.type_II_boxes():
+            if w not in self._boxes and all(self._is_filled_if_valid(v)
+                                            for v in higher_boxes(w)):
                 with self.clone() as child:
-                    child.fill_box(i, j, k)
+                    child.fill_box(w)
+                    for v in lower_boxes(w):
+                        child.relax(v)
                 result.append(child)
-        # TODO
+
+        # Add labelled type III or remove a label
+        for w in self._parent.type_III_boxes():
+            if w not in self._boxes:
+                # Try to add a labelled box
+                choices = [i for i in range(3)
+                           if all(self._is_filled_if_valid(v, i) for v in higher_boxes(w))]
+                assert len(choices) != 2, "there should always be 0,1, or 3 choices"
+                
+                if len(choices) == 1:
+                    # Theres only one possible fixed label.
+                    # Upper blocks may be free, so we need to force them to be fixed.
+                    with self.clone() as child:
+                        child.fill_box(w, choices[0])
+                        for v in higher_boxes(w):
+                            child.force(v, choices[0])
+                    result.append(child)
+                elif len(choices) == 3:
+                    # Use a free label
+                    with self.clone() as child:
+                        child.fill_box(w, 3)
+                    result.append(child)
+                    
+            elif self._boxes[w] != -1:
+                # Try to remove a label
+                if all(self._is_filled_if_valid(v) for v in higher_boxes(w)):
+                    with self.clone() as child:
+                        child.fill_box(w)
+                        for v in lower_boxes(w):
+                            child.relax(v)
+                    result.append(child)
         return result
 
     def __eq__(self, other):
@@ -257,15 +315,13 @@ class LabelledBoxConfiguration(ClonableElement):
         # then they're the same
         return (isinstance(other, type(self)) and
                 self._parent == other._parent and
-                len(self._boxes) == len(other._boxes) and
+                self._boxes == other._boxes and
                 all((i, j, k) in other._boxes and
                     (self._boxes[(i, j, k)] == -1) == (other._boxes[(i, j, k)] == -1)
                     for (i, j, k) in self._boxes))
 
     def __hash__(self):
-        unlabelled_boxes = frozenset(b for b in self._boxes if self._boxes[b] == -1)
-        labelled_boxes = frozenset(b for b in self._boxes if self._boxes[b] != -1)
-        return hash((labelled_boxes, unlabelled_boxes))
+        return hash((self._parent, frozenset(self._boxes.items())))
 
     def _repr_(self):
         return "Labelled box configuration of length %s with outgoing partitions %s" \
@@ -328,15 +384,14 @@ class LabelledBoxConfiguration(ClonableElement):
                             result += "      "
                         else:
                             result += "|     "
-                    elif self._boxes[(row, col, layer)] == -1:
-                        result += "|     "
                     else:
-                        # Labelled box.  What to do?
-                        label = self._boxes[(row, col, layer)]
-                        if self._labels[label] == -1:
-                            result += "| L_%-2d" % label
+                        value = self._boxes[(row, col, layer)]
+                        if value == -1:
+                            result += "|     "
+                        elif value == 3:
+                            result += "| *?* "
                         else:
-                            result += "| *%d* " % (self._labels[label] + 1)
+                            result += "| *%d* " % (value + 1)
                 if (row, right, layer) in self._boxes:
                     result += "|"
                 result += "\n"
@@ -391,9 +446,21 @@ class LabelledBoxConfigurations(Parent, CachedRepresentation):
     def type_III_boxes(self):
         return self._type_n_boxes(3)
 
+    def renormalized_volume(self):
+        return -len(self.type_II_boxes()) - 2 * len(self.type_III_boxes())
+
     def of_size_n(self, n):
         S = {LabelledBoxConfiguration(self._legs[0], self._legs[1], self._legs[2])}
         for i in range(n):
             S = {y for x in S for y in x.children()}
         return S
+
+    def up_to_size_n(self, n):
+        S = {LabelledBoxConfiguration(self._legs[0], self._legs[1], self._legs[2])}
+        result = S
+        for i in range(n):
+            S = {y for x in S for y in x.children()}
+            result = result.union(S)
+        return result
+        
 
